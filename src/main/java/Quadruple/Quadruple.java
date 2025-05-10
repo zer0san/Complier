@@ -1,4 +1,4 @@
-package Parser;
+package Quadruple;
 
 // 四元式
 public class Quadruple {
@@ -16,3 +16,4 @@ public class Quadruple {
         return String.format("(%s %s %s %s)", op, arg1, arg2, result);
     }
 }
+
