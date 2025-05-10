@@ -128,7 +128,7 @@ public class RecursiveParser {
         gen.gotoLabel(labelStart);
         gen.emitLabel(labelEnd);
 
-        gen.emitWhLabel();
+        gen.emitWeLabel();
     }
 
     private Condition parseCondition() {
