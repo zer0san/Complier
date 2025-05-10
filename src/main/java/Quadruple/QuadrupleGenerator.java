@@ -7,6 +7,26 @@ public class QuadrupleGenerator {
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
     List<Quadruple> quds = new ArrayList<>();
 
+    // 判断条件
+    public void ifFalse(Condition cond, String label) {
+        String left = generateExpr(cond.left);
+        String right = generateExpr(cond.right);
+        String temp = newTemp();
+        quds.add(new Quadruple(cond.op, left, right, temp));
+        quds.add(new Quadruple("if", temp, "_", label));
+    }
+
+    // 跳转标签
+    public void gotoLabel(String label) {
+        quds.add(new Quadruple("goto", "_", "_", label));
+    }
+
+    // 生成标签
+    public void emitLabel(String label) {
+        quds.add(new Quadruple("label", "_", "_", label));
+    }
+
+
     boolean isNumber(String s) {
         return s.matches("-?\\d+");
     }

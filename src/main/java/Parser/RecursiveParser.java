@@ -8,7 +8,8 @@ import Lexer.*;
 public class RecursiveParser {
     private final List<Token> tokens;
     private int pos = 0;
-    private QuadrupleGenerator gen = new QuadrupleGenerator();
+    private int labelId = 0;
+    private final QuadrupleGenerator gen = new QuadrupleGenerator();
 
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
@@ -71,10 +72,65 @@ public class RecursiveParser {
         // 代码块
         else if (t.value.equals("{")) {
             parseBlock();
+        } else if (t.value.equals("if")) {
+            parseIfStmt();
+        } else if (t.value.equals("while")) {
+            parseWhileStmt();
         } else {
             // 当源代码存在语法错误，报错
             throw new RuntimeException("Expected DeclStmt, AssignStmt or Block, but found " + t.value);
         }
+    }
+
+    private String newLabel() {
+        return "L" + (labelId++);
+    }
+
+    private void parseIfStmt() {
+        match("if");
+        match("(");
+        Condition cond = parseCondition();
+        match(")");
+
+        String labelElse = newLabel();
+        String labelEnd = newLabel();
+
+        gen.ifFalse(cond, labelElse);
+        parseStmt(); // then 语句
+
+        if (lookahead().value.equals("else")) {
+            gen.gotoLabel(labelEnd); // then 后跳过else
+            gen.emitLabel(labelElse);
+            match("else");
+            parseStmt();  // 处理else内容
+            gen.emitLabel(labelEnd);
+        } else {
+            gen.emitLabel(labelElse); // 没有else，else标签直接作为结束
+        }
+    }
+
+    private void parseWhileStmt(){
+        match("while");
+        String labelStart = newLabel();
+        String labelEnd = newLabel();
+
+        gen.emitLabel(labelStart);
+
+        match("(");
+        Condition cond = parseCondition();
+        match(")");
+
+        gen.ifFalse(cond, labelEnd);
+        parseStmt();
+        gen.gotoLabel(labelStart);
+        gen.emitLabel(labelEnd);
+    }
+
+    private Condition parseCondition(){
+        Expr left = parseExpr();
+        String op = match(lookahead().value).value;
+        Expr right = parseExpr();
+        return new Condition(op,left,right);
     }
 
     private void parseDeclStmt() {
