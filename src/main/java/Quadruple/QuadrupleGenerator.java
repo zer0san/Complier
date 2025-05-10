@@ -29,6 +29,7 @@ public class QuadrupleGenerator {
                 return cseCache.get(key);
             }
             if (isNumber(arg1) && isNumber(arg2)) {
+                // 常量折叠
                 int folded = switch (b.op) {
                     case "+" -> Integer.parseInt(arg1) + Integer.parseInt(arg2);
                     case "-" -> Integer.parseInt(arg1) - Integer.parseInt(arg2);
