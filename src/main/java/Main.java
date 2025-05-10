@@ -15,14 +15,8 @@ public class Main {
                 if(a >= 1){
                     a = b + c;
                 }
-                if(a <0){
-                    a = c + b;
-                }
                 else{
                     b = a + c;
-                }
-                while(a == 1){
-                    a = b + c;
                 }
                 """;
         // 词法分析
