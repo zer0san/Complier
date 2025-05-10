@@ -15,6 +15,12 @@ public class Main {
                 while (a >= 1){
                     a = b + c;
                 }
+                if (a == 1){
+                    a = b + c;
+                }
+                else {
+                    a = a * 2;
+                }
 
                 """;
         // 词法分析

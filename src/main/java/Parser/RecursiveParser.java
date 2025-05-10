@@ -100,6 +100,7 @@ public class RecursiveParser {
 
         if (lookahead().value.equals("else")) {
             gen.gotoLabel(labelEnd); // then 后跳过else
+            gen.emitElLabel();
             gen.emitLabel(labelElse);
             match("else");
             parseStmt();  // 处理else内容

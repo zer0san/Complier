@@ -26,6 +26,11 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("label", "_", "_", label));
     }
 
+    // el 标签
+    public void emitElLabel() {
+        quds.add(new Quadruple("el", "_", "_", "_"));
+    }
+
     // ie 标签
     public void emitIeLabel() {
         quds.add(new Quadruple("ie", "_", "_", "_"));
