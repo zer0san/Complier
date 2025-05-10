@@ -92,4 +92,10 @@ public class Lexer {
             pos++;
         }
     }
+
+    public void show(){
+        for(var t : tokens){
+            System.out.println(t);
+        }
+    }
 }
