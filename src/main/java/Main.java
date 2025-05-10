@@ -1,7 +1,6 @@
 import Lexer.*;
 import Parser.*;
 
-import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -11,9 +10,10 @@ public class Main {
         String s = """
                 int a;
                 int b;
-                a = 2 + 3 * 4;
-                b = a + 5;
-                a = a + 1;
+                int c;
+                int d;
+                a = b + c;
+                d = b + c;
                 """;
         // 词法分析
         Lexer lexer = new Lexer(s);
