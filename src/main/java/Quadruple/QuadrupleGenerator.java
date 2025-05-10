@@ -4,9 +4,7 @@ import java.util.*;
 
 public class QuadrupleGenerator {
     private int tempId = 0;
-    private Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
-    private Map<String, String> valueMap = new HashMap<>(); // 代入传播
-    private Set<String> usedTemps = new HashSet<>(); // 死代码检测
+    private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
     List<Quadruple> quds = new ArrayList<>();
 
     boolean isNumber(String s) {
@@ -15,9 +13,7 @@ public class QuadrupleGenerator {
 
     // 创建临时变量
     String newTemp() {
-        String temp = "t" + (tempId++);
-        usedTemps.add(temp);
-        return temp;
+        return "t" + (tempId++);
     }
 
     String generateExpr(Expr expr) {
@@ -52,7 +48,6 @@ public class QuadrupleGenerator {
 
     public void assign(String var, Expr expr) {
         String value = generateExpr(expr);
-        valueMap.put(var, value); // 代入传播
         quds.add(new Quadruple("=", value, "_", var));
     }
 
