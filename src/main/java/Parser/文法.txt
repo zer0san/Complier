@@ -1,0 +1,11 @@
+Program     → StmtList
+StmtList    → Stmt StmtList | ε
+Stmt        → DeclStmt | AssignStmt | Block
+DeclStmt    → 'int' IDENTIFIER ';'
+AssignStmt  → IDENTIFIER '=' Expr ';'
+Block       → '{' StmtList '}'
+Expr        → Term Expr'
+Expr'       → ('+'|'-') Term Expr' | ε
+Term        → Factor Term'
+Term'       → ('*'|'/') Factor Term' | ε
+Factor      → IDENTIFIER | NUMBER | '(' Expr ')'
