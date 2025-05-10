@@ -4,11 +4,16 @@ import java.util.*;
 
 public class QuadrupleGenerator {
     private int tempId = 0;
+    private Map<String,String> cseCache = new HashMap<>(); // 公共子表达式消除
+    private Map<String,String> valueMap = new HashMap<>(); // 代入传播
+    private Set<String> usedTemps = new HashSet<>(); // 死代码检测
     List<Quadruple> quds = new ArrayList<>();
 
     // 创建临时变量
     String newTemp() {
-        return "t" + (tempId++);
+        String temp = "t" + (tempId++);
+        usedTemps.add(temp);
+        return temp;
     }
 
     String generateExpr(Expr expr) {
