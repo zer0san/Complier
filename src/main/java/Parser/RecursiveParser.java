@@ -107,12 +107,15 @@ public class RecursiveParser {
         } else {
             gen.emitLabel(labelElse); // 没有else，else标签直接作为结束
         }
+        gen.emitIeLabel();
     }
 
-    private void parseWhileStmt(){
+    private void parseWhileStmt() {
         match("while");
         String labelStart = newLabel();
         String labelEnd = newLabel();
+
+        gen.emitWhLabel();
 
         gen.emitLabel(labelStart);
 
@@ -124,13 +127,15 @@ public class RecursiveParser {
         parseStmt();
         gen.gotoLabel(labelStart);
         gen.emitLabel(labelEnd);
+
+        gen.emitWhLabel();
     }
 
-    private Condition parseCondition(){
+    private Condition parseCondition() {
         Expr left = parseExpr();
         String op = match(lookahead().value).value;
         Expr right = parseExpr();
-        return new Condition(op,left,right);
+        return new Condition(op, left, right);
     }
 
     private void parseDeclStmt() {

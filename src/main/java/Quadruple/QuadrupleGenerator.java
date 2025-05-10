@@ -26,6 +26,21 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("label", "_", "_", label));
     }
 
+    // ie 标签
+    public void emitIeLabel() {
+        quds.add(new Quadruple("ie", "_", "_", "_"));
+    }
+
+    // we 标签
+    public void emitWeLabel() {
+        quds.add(new Quadruple("we", "_", "_", "_"));
+    }
+
+    // wh 标签
+    public void emitWhLabel(){
+        quds.add(new Quadruple("wh", "_", "_", "_"));
+    }
+
 
     boolean isNumber(String s) {
         return s.matches("-?\\d+");

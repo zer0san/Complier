@@ -12,12 +12,10 @@ public class Main {
                 int b;
                 int c;
                 a = b + c;
-                if(a >= 1){
+                while (a >= 1){
                     a = b + c;
                 }
-                else{
-                    b = a + c;
-                }
+
                 """;
         // 词法分析
         Lexer lexer = new Lexer(s);
