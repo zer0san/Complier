@@ -26,12 +26,12 @@ public class QuadrupleGenerator {
         return null;
     }
 
-    void assign(String var,Expr expr){
+    public void assign(String var,Expr expr){
         String value = generateExpr(expr);
         quds.add(new Quadruple("=",value,"_",var));
     }
 
-    void show(){
+    public void show(){
         for(var q : quds){
             System.out.println(q);
         }

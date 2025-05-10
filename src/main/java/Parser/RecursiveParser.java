@@ -2,11 +2,13 @@ package Parser;
 
 import java.util.*;
 
+import Quadruple.*;
 import Lexer.*;
 
 public class RecursiveParser {
     private final List<Token> tokens;
     private int pos = 0;
+    private QuadrupleGenerator gen = new QuadrupleGenerator();
 
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
@@ -46,6 +48,8 @@ public class RecursiveParser {
     {
         parseStmtList();
         System.out.println("Parse Successful!");
+        System.out.println("生成的四元式");
+        gen.show();
     }
 
     // 处理语句
@@ -84,9 +88,10 @@ public class RecursiveParser {
     }
 
     private void parseAssignStmt(){
-        match(Token.Type.IDENTIFIER);
+        String var = match(Token.Type.IDENTIFIER).value;
         match("=");
-        parseExpr();
+        Expr expr = parseExpr();
+        gen.assign(var,expr);
         match(";");
     }
 
@@ -97,47 +102,61 @@ public class RecursiveParser {
     }
 
     // 处理加减表达式
-    private void parseExpr(){
-        parseTerm();
-        parseExprPrime();
+    private Expr parseExpr(){
+        Expr left = parseTerm();
+        while(lookahead().value.equals("+")||lookahead().value.equals("-")){
+            String op = match(lookahead().value).value;
+            Expr right = parseTerm();
+            left = new BinaryExpr(op,left,right);
+        }
+        return left;
     }
 
-    // 处理多个+或-连接的项
-    private void parseExprPrime(){
-        Token t = lookahead();
-        if(t.value.equals("+") || t.value.equals("-")){
-            match(t.value);
-            parseTerm();
-            parseExprPrime();
-        }
-    }
+//    // 处理多个+或-连接的项
+//    private void parseExprPrime(){
+//        Token t = lookahead();
+//        if(t.value.equals("+") || t.value.equals("-")){
+//            match(t.value);
+//            parseTerm();
+//            parseExprPrime();
+//        }
+//    }
 
     // 处理乘除表达式
-    private void parseTerm(){
-        parseFactor();
-        parseTermPrime();
+    private Expr parseTerm(){
+        Expr left = parseFactor();
+        while(lookahead().value.equals("*")||lookahead().value.equals("/")){
+            String op = match(lookahead().value).value;
+            Expr right = parseFactor();
+            left = new BinaryExpr(op,left,right);
+        }
+        return left;
     }
 
-    // 处理多个*或/连接的项
-    private void parseTermPrime(){
-        Token t = lookahead();
-        if(t.value.equals("*") || t.value.equals("/")){
-            match(t.value);
-            parseFactor();
-            parseTermPrime();
-        }
-    }
+//    // 处理多个*或/连接的项
+//    private void parseTermPrime(){
+//        Token t = lookahead();
+//        if(t.value.equals("*") || t.value.equals("/")){
+//            match(t.value);
+//            parseFactor();
+//            parseTermPrime();
+//        }
+//    }
 
     // 处理变量、数字、括号表达式
-    private void parseFactor(){
+    private Expr parseFactor(){
         Token t = lookahead();
-        if(t.type == Token.Type.IDENTIFIER || t.type == Token.Type.NUMBER){
-            match(t.type);
+        if(t.type == Token.Type.IDENTIFIER){
+            return new VarExpr(match(Token.Type.IDENTIFIER).value);
+        }
+        else if (t.type==Token.Type.NUMBER){
+            return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
         }
         else if(t.value.equals("(")){
             match("(");
-            parseExpr();
+            Expr expr = parseExpr();
             match(")");
+            return expr;
         }
         else{
             // 当源代码存在语法错误，报错
