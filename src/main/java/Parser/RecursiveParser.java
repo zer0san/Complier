@@ -44,123 +44,102 @@ public class RecursiveParser {
     }
 
     // 程序入口
-    public void parseProgram()
-    {
+    public void parseProgram() {
         parseStmtList();
         System.out.println("Parse Successful!");
-        System.out.println("生成的四元式");
-        gen.show();
     }
 
     // 处理语句
     // 不断调用parseStmt，直到遇到右大括号或文件结尾
     private void parseStmtList() {
-        while(!lookahead().value.equals("}") && lookahead().type != Token.Type.EOF) {
+        while (!lookahead().value.equals("}") && lookahead().type != Token.Type.EOF) {
             parseStmt();
         }
     }
 
     // 识别语句是哪种类型
-    private void parseStmt(){
+    private void parseStmt() {
         Token t = lookahead();
         // 声明语句
-        if(t.value.equals("int")){
+        if (t.value.equals("int")) {
             parseDeclStmt();
         }
         // 赋值语句
-        else if(t.type == Token.Type.IDENTIFIER){
+        else if (t.type == Token.Type.IDENTIFIER) {
             parseAssignStmt();
         }
         // 代码块
-        else if(t.value.equals("{")){
+        else if (t.value.equals("{")) {
             parseBlock();
-        }
-        else{
+        } else {
             // 当源代码存在语法错误，报错
             throw new RuntimeException("Expected DeclStmt, AssignStmt or Block, but found " + t.value);
         }
     }
 
-    private void parseDeclStmt(){
+    private void parseDeclStmt() {
         match("int");
         match(Token.Type.IDENTIFIER);
         match(";");
     }
 
-    private void parseAssignStmt(){
+    private void parseAssignStmt() {
         String var = match(Token.Type.IDENTIFIER).value;
         match("=");
         Expr expr = parseExpr();
-        gen.assign(var,expr);
+        gen.assign(var, expr);
         match(";");
     }
 
-    private void parseBlock(){
+    private void parseBlock() {
         match("{");
         parseStmtList();
         match("}");
     }
 
     // 处理加减表达式
-    private Expr parseExpr(){
+    private Expr parseExpr() {
         Expr left = parseTerm();
-        while(lookahead().value.equals("+")||lookahead().value.equals("-")){
+        while (lookahead().value.equals("+") || lookahead().value.equals("-")) {
             String op = match(lookahead().value).value;
             Expr right = parseTerm();
-            left = new BinaryExpr(op,left,right);
+            left = new BinaryExpr(op, left, right);
         }
         return left;
     }
-
-//    // 处理多个+或-连接的项
-//    private void parseExprPrime(){
-//        Token t = lookahead();
-//        if(t.value.equals("+") || t.value.equals("-")){
-//            match(t.value);
-//            parseTerm();
-//            parseExprPrime();
-//        }
-//    }
 
     // 处理乘除表达式
-    private Expr parseTerm(){
+    private Expr parseTerm() {
         Expr left = parseFactor();
-        while(lookahead().value.equals("*")||lookahead().value.equals("/")){
+        while (lookahead().value.equals("*") || lookahead().value.equals("/")) {
             String op = match(lookahead().value).value;
             Expr right = parseFactor();
-            left = new BinaryExpr(op,left,right);
+            left = new BinaryExpr(op, left, right);
         }
         return left;
     }
 
-//    // 处理多个*或/连接的项
-//    private void parseTermPrime(){
-//        Token t = lookahead();
-//        if(t.value.equals("*") || t.value.equals("/")){
-//            match(t.value);
-//            parseFactor();
-//            parseTermPrime();
-//        }
-//    }
-
     // 处理变量、数字、括号表达式
-    private Expr parseFactor(){
+    private Expr parseFactor() {
         Token t = lookahead();
-        if(t.type == Token.Type.IDENTIFIER){
+        if (t.type == Token.Type.IDENTIFIER) {
             return new VarExpr(match(Token.Type.IDENTIFIER).value);
-        }
-        else if (t.type==Token.Type.NUMBER){
+        } else if (t.type == Token.Type.NUMBER) {
             return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
-        }
-        else if(t.value.equals("(")){
+        } else if (t.value.equals("(")) {
             match("(");
             Expr expr = parseExpr();
             match(")");
             return expr;
-        }
-        else{
+        } else {
             // 当源代码存在语法错误，报错
             throw new RuntimeException("Expected Identifier or Number, but found " + t.value);
         }
+    }
+
+    // 输出四元式
+    public void show() {
+        System.out.println("生成的四元式");
+        gen.show();
     }
 }
