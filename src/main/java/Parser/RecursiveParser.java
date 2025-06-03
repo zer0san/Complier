@@ -2,7 +2,7 @@ package Parser;
 
 import java.util.*;
 
-import Quadruple.*;
+import Parser.Quadruple.*;
 import Lexer.*;
 
 public class RecursiveParser {

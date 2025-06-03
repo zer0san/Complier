@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 // 二元运算
 public class BinaryExpr extends Expr {

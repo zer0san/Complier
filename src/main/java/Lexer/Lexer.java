@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Lexer {
     private static final Set<String> keywords = new HashSet<>(Arrays.asList(
-            "if", "else", "while", "for", "int"
+            "if", "else", "while", "for", "int", "program", "return"
     ));
     private static final Set<Character> operators = new HashSet<>(Arrays.asList(
             '+', '-', '*', '/', '=', '<', '>', '!'
@@ -16,7 +16,7 @@ public class Lexer {
             '(', ')', '{', '}', ';', ','
     ));
 
-    private String input;
+    private final String input;
     private int pos;
 
     public Lexer(String input) {
@@ -24,7 +24,7 @@ public class Lexer {
         this.pos = 0;
     }
 
-    private List<Token> tokens = new ArrayList<>();
+    private final List<Token> tokens = new ArrayList<>();
 
     public List<Token> analyze() {
         while (pos < input.length()) {

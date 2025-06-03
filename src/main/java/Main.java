@@ -21,7 +21,6 @@ public class Main {
                 else {
                     a = a * 2;
                 }
-
                 """;
         // 词法分析
         Lexer lexer = new Lexer(s);

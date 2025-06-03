@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 public class Condition {
     public final String op;

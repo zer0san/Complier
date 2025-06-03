@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 // 标识符（变量）
 public class VarExpr extends Expr{

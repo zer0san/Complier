@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 // 四元式
 public class Quadruple {

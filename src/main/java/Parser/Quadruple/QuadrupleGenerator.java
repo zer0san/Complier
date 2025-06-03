@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 import java.util.*;
 

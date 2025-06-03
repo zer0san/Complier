@@ -1,4 +1,4 @@
-package Quadruple;
+package Parser.Quadruple;
 
 // 数字
 public class NumberExpr extends Expr {
