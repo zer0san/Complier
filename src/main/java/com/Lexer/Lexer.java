@@ -1,4 +1,4 @@
-package Lexer;
+package com.Lexer;
 
 import java.util.*;
 
@@ -93,9 +93,10 @@ public class Lexer {
         }
     }
 
-    public void show(){
+    public List<Token> show(){
         for(var t : tokens){
             System.out.println(t);
         }
+        return tokens ;
     }
 }

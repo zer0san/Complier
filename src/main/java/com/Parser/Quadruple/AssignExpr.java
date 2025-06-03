@@ -1,4 +1,4 @@
-package Parser.Quadruple;
+package com.Parser.Quadruple;
 
 // 赋值
 public class AssignExpr extends Expr {

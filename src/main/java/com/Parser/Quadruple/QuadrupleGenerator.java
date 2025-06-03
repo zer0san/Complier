@@ -1,4 +1,4 @@
-package Parser.Quadruple;
+package com.Parser.Quadruple;
 
 import java.util.*;
 
@@ -92,9 +92,14 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("=", value, "_", var));
     }
 
-    public void show() {
+    public List<Quadruple> show() {
         for (var q : quds) {
             System.out.println(q);
         }
+        return quds;
+    }
+
+    public List<Quadruple> getQuadruples() {
+        return quds;
     }
 }

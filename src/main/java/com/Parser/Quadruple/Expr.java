@@ -1,4 +1,4 @@
-package Parser.Quadruple;
+package com.Parser.Quadruple;
 
 // AST 定义
 

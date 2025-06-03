@@ -1,4 +1,4 @@
-package Lexer;
+package com.Lexer;
 
 public class Token {
 

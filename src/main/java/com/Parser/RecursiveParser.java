@@ -1,9 +1,10 @@
-package Parser;
-
+package com.Parser;
 import java.util.*;
 
-import Parser.Quadruple.*;
-import Lexer.*;
+import com.Parser.*;
+import com.Lexer.*;
+import com.Lexer.Token;
+import com.Parser.Quadruple.*;
 
 public class RecursiveParser {
     private final List<Token> tokens;
@@ -14,6 +15,7 @@ public class RecursiveParser {
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
     }
+
 
     private Token lookahead() {
         if (pos < tokens.size())
@@ -200,8 +202,9 @@ public class RecursiveParser {
     }
 
     // 输出四元式
-    public void show() {
+    public List<Quadruple> show() {
         System.out.println("生成的四元式");
         gen.show();
+        return gen.getQuadruples();
     }
 }
