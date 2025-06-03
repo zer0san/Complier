@@ -79,7 +79,44 @@ public class RecursiveParser {
 
     // 处理函数
     private void parseFuncDecl() {
+        // 匹配返回类型
+        match("int");
+        // 匹配函数名
+        String funcName = match(Token.Type.IDENTIFIER).value;
+        // 匹配左括号
+        match("(");
+        // 匹配参数列表
+        List<String> argList = parseParamList();
+        // 匹配右括号
+        match(")");
+        // 生成函数入口标签
+        gen.emitFlabel(funcName);
+        // 进入函数体
+        parseBlock();
+        // 生成函数返回/结束标记
+        gen.emitFuncEnd(funcName);
+    }
 
+    // 参数列表解析，支持int a或者空
+    private List<String> parseParamList() {
+        List<String> params = new ArrayList<>();
+        // 如果下一个是")"，则无参数
+        if(lookahead().value.equals(")")) {
+            return params;
+        }
+        do{
+            match("int");
+            String paramName = match(Token.Type.IDENTIFIER).value;
+            params.add(paramName);
+            // 如果下一个是逗号，就继续
+            if(lookahead().value.equals(",")) {
+                match(",");
+            }
+            else {
+                break;
+            }
+        }while(true);
+        return params;
     }
 
 
