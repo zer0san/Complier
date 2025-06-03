@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Fake!</title>
-    <script src = "https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <script src="script.js">
-    </script>
+<script src="script.js"></script>
 
-    <div>
-        <div id="input">
-            <div>
-                <textarea id="ipt_area">
-
-                </textarea>
-            </div>
-            <div>
-                <button id="upload">上传</button>
-                <button id="read_file">从文件读取</button>
-            </div>
-        </div>
-        <div id="output">
-            <div id="opt_title">结果输出</div>
-            <textarea id="opt_area">
-
-            </textarea>
+<div class="container">
+    <div id="input" class="card">
+        <textarea id="ipt_area" placeholder="请输入内容..."></textarea>
+        <div class="actions">
+            <label class="upload-btn">
+                上传
+                <input type="file" id="read_file" hidden>
+            </label>
+            <button id="upload">提交</button>
         </div>
     </div>
+
+    <div id="output" class="card">
+        <div id="opt_title">结果输出</div>
+        <textarea id="opt_area" placeholder="这里将显示结果..." readonly></textarea>
+    </div>
+</div>
 </body>
 </html>
