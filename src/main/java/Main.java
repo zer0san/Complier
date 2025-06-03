@@ -8,18 +8,13 @@ public class Main {
 //        Scanner scan = new Scanner(System.in);
 //        String s = scan.nextLine();
         String s = """
-                int a;
-                int b;
-                int c;
-                a = b + c;
-                while (a >= 1){
-                    a = b + c;
+                int main(){
+                    int b;
+                    b = 1;
                 }
-                if (a == 1){
-                    a = b + c;
-                }
-                else {
-                    a = a * 2;
+                
+                int func(){
+                    int a;
                 }
                 """;
         // 词法分析
