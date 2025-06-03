@@ -44,11 +44,44 @@ public class RecursiveParser {
         }
     }
 
+    private String newLabel() {
+        return "L" + (labelId++);
+    }
+
+
     // 程序入口
     public void parseProgram() {
+        while(lookahead().type != Token.Type.EOF) {
+            if(isFuncDeclStart()) {
+                parseFuncDecl();
+            }
+            else {
+                parseStmt();
+            }
+        }
+
         parseStmtList();
         System.out.println("Parse Successful!");
     }
+
+    // 判断是否为函数声明起始
+    // 即int后面跟标识符，再跟(
+    private boolean isFuncDeclStart() {
+        if(!lookahead().value.equals("int")) return false;
+        // 尝试看下一个和下下个
+        if(pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
+            if(pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 处理函数
+    private void parseFuncDecl() {
+
+    }
+
 
     // 处理语句
     // 不断调用parseStmt，直到遇到右大括号或文件结尾
@@ -57,6 +90,7 @@ public class RecursiveParser {
             parseStmt();
         }
     }
+
 
     // 识别语句是哪种类型
     private void parseStmt() {
@@ -82,9 +116,6 @@ public class RecursiveParser {
         }
     }
 
-    private String newLabel() {
-        return "L" + (labelId++);
-    }
 
     private void parseIfStmt() {
         match("if");
