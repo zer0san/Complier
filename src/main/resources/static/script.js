@@ -1,28 +1,27 @@
 $(document).ready(function () {
     $('#upload').click(function (e) {
 
-        const fileInput = $('#read_file')[0];
-        if (fileInput.files.length === 0) {
-            alert("请先选择文件！");
-            return;
-        }
-
         const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
+        formData.append("sourceCode", $('#ipt_area').val());
 
         $.ajax({
-            url: "http://172.18.149.11:8080/parse",
+            url: "http://localhost:8080/parse",
             type: "POST",
-            data: formData,
-            contentType: false,
+            data: JSON.stringify({sourceCode: $('#ipt_area').val()}),
+            contentType:"application/json",
             processData: false,
             success: function (data) {
-                $("#opt_area").val(data);
-                alert(data);
+                $("#opt_area").innerText = data;
+                document.getElementById("opt_area").innerText = data;
+                console.log(data);
+                // alert(data);
             },
             error: function (xhr, status, error) {
-                alert("failed");
+                $("#opt_area").style = "color: red;";
+                document.getElementById("opt_area").innerText = "解析失败，请检查输入代码是否正确！\n"+error.toString();
+                // alert("failed" + error.toString());
             }
         });
+
     });
 });
