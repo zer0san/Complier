@@ -90,7 +90,7 @@ public class RecursiveParser {
         // 匹配右括号
         match(")");
         // 生成函数入口标签
-        gen.emitFlabel(funcName);
+        gen.emitFuncLabel(funcName);
         // 进入函数体
         parseBlock();
         // 生成函数返回/结束标记
