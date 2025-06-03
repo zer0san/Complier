@@ -3,6 +3,7 @@ package com.Rest;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.Main;
+import org.assertj.core.util.Strings;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +19,10 @@ public class Controller {
     public String parse(@RequestBody MultipartFile  file) {
         try {
             byte[] bytes = file.getBytes();
-            String s = JSONUtil.toJsonStr(bytes);
+//            String s =StrUtil.toString(bytes);
+            String s = new String(bytes);
+            System.out.printf("%s", s);
+            System.out.println();
             List<String> solve = Main.Solve(s);
             res = StrUtil.join("\n", solve);
             return res;

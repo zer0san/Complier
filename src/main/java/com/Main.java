@@ -17,18 +17,23 @@ public class Main {
     static public List<String> Solve(String s) {
         //        Scanner scan = new Scanner(System.in);
         // 词法分析
-        Lexer lexer = new Lexer(s);
-        List<Token> tokens = lexer.analyze();
-        System.out.println("词法分析结果:");
-         lexer.show();
+        try {
+
+            Lexer lexer = new Lexer(s);
+            List<Token> tokens = lexer.analyze();
+            System.out.println("词法分析结果:");
+            lexer.show();
 //         语法分析
-        RecursiveParser parser = new RecursiveParser(tokens);
-        parser.parseProgram();
-        List<Quadruple> qds = parser.show();
-        List<String> rTokens= tokens.stream().map(Token::toString).collect(Collectors.toList());
-        List<String> collect = qds.stream().map(Quadruple::toString).collect(Collectors.toList());
-        rTokens.addAll(collect);
-        return rTokens;
+            RecursiveParser parser = new RecursiveParser(tokens);
+            parser.parseProgram();
+            List<Quadruple> qds = parser.show();
+            List<String> rTokens = tokens.stream().map(Token::toString).collect(Collectors.toList());
+            List<String> collect = qds.stream().map(Quadruple::toString).collect(Collectors.toList());
+            rTokens.addAll(collect);
+        } catch (Exception e) {
+
+        }
+        return List.of("hello");
     }
 
     public static void main(String[] args) {
