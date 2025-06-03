@@ -46,6 +46,16 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("wh", "_", "_", "_"));
     }
 
+    // 函数开始标签
+    public void emitFuncLabel(String label) {
+        quds.add(new Quadruple("FuncStart","_","_",label));
+    }
+
+    // 函数结束标签
+    public void emitFuncEnd(String label){
+        quds.add(new Quadruple("FuncEnd","_","_",label));
+    }
+
 
     boolean isNumber(String s) {
         return s.matches("-?\\d+");

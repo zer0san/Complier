@@ -12,10 +12,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 // Main.java
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
 public class Main {
     static public List<String> Solve(String s) {
-        //        Scanner scan = new Scanner(System.in);
+        // Scanner scan = new Scanner(System.in);
         // 词法分析
         try {
 
@@ -23,7 +23,7 @@ public class Main {
             List<Token> tokens = lexer.analyze();
             System.out.println("词法分析结果:");
             lexer.show();
-//         语法分析
+            // 语法分析
             RecursiveParser parser = new RecursiveParser(tokens);
             parser.parseProgram();
             List<Quadruple> qds = parser.show();

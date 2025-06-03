@@ -46,11 +46,81 @@ public class RecursiveParser {
         }
     }
 
+    private String newLabel() {
+        return "L" + (labelId++);
+    }
+
+
     // 程序入口
     public void parseProgram() {
+        while(lookahead().type != Token.Type.EOF) {
+            if(isFuncDeclStart()) {
+                parseFuncDecl();
+            }
+            else {
+                parseStmt();
+            }
+        }
+
         parseStmtList();
         System.out.println("Parse Successful!");
     }
+
+    // 判断是否为函数声明起始
+    // 即int后面跟标识符，再跟(
+    private boolean isFuncDeclStart() {
+        if(!lookahead().value.equals("int")) return false;
+        // 尝试看下一个和下下个
+        if(pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
+            if(pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 处理函数
+    private void parseFuncDecl() {
+        // 匹配返回类型
+        match("int");
+        // 匹配函数名
+        String funcName = match(Token.Type.IDENTIFIER).value;
+        // 匹配左括号
+        match("(");
+        // 匹配参数列表
+        List<String> argList = parseParamList();
+        // 匹配右括号
+        match(")");
+        // 生成函数入口标签
+        gen.emitFuncLabel(funcName);
+        // 进入函数体
+        parseBlock();
+        // 生成函数返回/结束标记
+        gen.emitFuncEnd(funcName);
+    }
+
+    // 参数列表解析，支持int a或者空
+    private List<String> parseParamList() {
+        List<String> params = new ArrayList<>();
+        // 如果下一个是")"，则无参数
+        if(lookahead().value.equals(")")) {
+            return params;
+        }
+        do{
+            match("int");
+            String paramName = match(Token.Type.IDENTIFIER).value;
+            params.add(paramName);
+            // 如果下一个是逗号，就继续
+            if(lookahead().value.equals(",")) {
+                match(",");
+            }
+            else {
+                break;
+            }
+        }while(true);
+        return params;
+    }
+
 
     // 处理语句
     // 不断调用parseStmt，直到遇到右大括号或文件结尾
@@ -59,6 +129,7 @@ public class RecursiveParser {
             parseStmt();
         }
     }
+
 
     // 识别语句是哪种类型
     private void parseStmt() {
@@ -84,9 +155,6 @@ public class RecursiveParser {
         }
     }
 
-    private String newLabel() {
-        return "L" + (labelId++);
-    }
 
     private void parseIfStmt() {
         match("if");
