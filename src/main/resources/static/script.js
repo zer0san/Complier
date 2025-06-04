@@ -7,15 +7,27 @@ $(document).ready(function () {
         $.ajax({
             url: "http://localhost:8080/parse",
             type: "POST",
-            data: JSON.stringify({ sourceCode: $('#ipt_area').val() }),
+            data: JSON.stringify({sourceCode: $('#ipt_area').val()}),
             contentType: "application/json",
             processData: false,
-            success: function (data) {
-                $("#opt_area").innerText = data;
-                // document.getElementById("opt_area").innerText = data;
-                var strings = data.toString().split("\n");
-                $("#opt_area").text(strings.join("\n"));
-                console.log(data);
+            success: function (result) {
+                console.log(result);
+                // result.success ;
+                // var re = JSON.parse(result);
+                // console.log(re)
+                // var status = re["success"];
+                //
+                const success = result.success;
+                console.log("success = "+success)
+                if (!success) {
+                    var strings = result.msg?.toString().split("\n");
+                    $("#opt_area").css("color", "red");
+                    $("#opt_area").text(strings.join("\n"));
+
+                } else {
+                    var strings = result.res.toString().split("\n");
+                    $("#opt_area").text(strings.join("\n"));
+                }
                 // alert(data);
             },
             error: function (xhr, status, error) {
