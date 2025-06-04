@@ -6,17 +6,15 @@ import java.util.*;
 
 public class Lexer {
     private static final Set<String> keywords = new HashSet<>(Arrays.asList(
-            "if", "else", "while", "for", "int", "return"
-    ));
+            "if", "else", "while", "for", "int", "return", "void", "break", "continue", "switch", "case", "default",
+            "do", "struct", "typedef", "const", "static", "extern", "sizeof", "goto", "enum", "union", "volatile",
+            "register", "auto", "inline"));
     private static final Set<Character> operators = new HashSet<>(Arrays.asList(
-            '+', '-', '*', '/', '=', '<', '>', '!'
-    ));
+            '+', '-', '*', '/', '=', '<', '>', '!'));
     private static final Set<String> two_operators = new HashSet<>(Arrays.asList(
-            "++", "--", "==", "!=", "<=", ">="
-    ));
+            "++", "--", "==", "!=", "<=", ">="));
     private static final Set<Character> separators = new HashSet<>(Arrays.asList(
-            '(', ')', '{', '}', ';', ','
-    ));
+            '(', ')', '{', '}', ';', ',', '[', ']'));
     @Getter
     Map<Token, Integer> bugFinderMp = new HashMap<>();
 
@@ -45,7 +43,7 @@ public class Lexer {
                 Token e = new Token(Token.Type.SEPARATOR, String.valueOf(current));
                 tokens.add(e);
                 bugFinderMp.put(e, pos);
-//                System.out.println("SEPARATOR: " + current);
+                // System.out.println("SEPARATOR: " + current);
                 pos++;
             } else {
                 System.out.println("Error! Unknown character: " + current);
@@ -65,12 +63,12 @@ public class Lexer {
             Token e = new Token(Token.Type.KEYWORD, token);
             tokens.add(e);
             bugFinderMp.put(e, pos);
-//            System.out.println("KEYWORD: " + token);
+            // System.out.println("KEYWORD: " + token);
         } else {
             Token e = new Token(Token.Type.IDENTIFIER, token);
             tokens.add(e);
             bugFinderMp.put(e, pos);
-//            System.out.println("IDENTIFIER: " + token);
+            // System.out.println("IDENTIFIER: " + token);
         }
     }
 
@@ -83,7 +81,7 @@ public class Lexer {
         Token e = new Token(Token.Type.NUMBER, token);
         tokens.add(e);
         bugFinderMp.put(e, pos);
-//        System.out.println("NUMBER: " + token);
+        // System.out.println("NUMBER: " + token);
     }
 
     private void readP() {
@@ -98,13 +96,13 @@ public class Lexer {
             Token e = new Token(Token.Type.OPERATOR, twoChar);
             tokens.add(e);
             bugFinderMp.put(e, pos);
-//            System.out.println("OPERATOR: " + twoChar);
+            // System.out.println("OPERATOR: " + twoChar);
             pos += 2;
         } else {
             Token e = new Token(Token.Type.OPERATOR, String.valueOf(current));
             tokens.add(e);
             bugFinderMp.put(e, pos);
-//            System.out.println("OPERATOR: " + current);
+            // System.out.println("OPERATOR: " + current);
             pos++;
         }
     }

@@ -56,6 +56,25 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("FuncEnd", "_", "_", label));
     }
 
+    // 数组声明
+    public void declareArray(String arrayName, int size) {
+        quds.add(new Quadruple("ARRAY_DECL", arrayName, Integer.toString(size), "_"));
+    }
+
+    // 数组访问
+    public String arrayAccess(String arrayName, Expr indexExpr) {
+        String indexValue = generateExpr(indexExpr);
+        String temp = newTemp();
+        quds.add(new Quadruple("ARRAY_ACCESS", arrayName, indexValue, temp));
+        return temp;
+    }
+
+    // 数组赋值
+    public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
+        String indexValue = generateExpr(indexExpr);
+        String value = generateExpr(valueExpr);
+        quds.add(new Quadruple("ARRAY_ASSIGN", arrayName, indexValue, value));
+    }
 
     boolean isNumber(String s) {
         return s.matches("-?\\d+");
@@ -71,6 +90,8 @@ public class QuadrupleGenerator {
             return Integer.toString(n.value);
         } else if (expr instanceof VarExpr v) {
             return v.name;
+        } else if (expr instanceof ArrayAccessExpr a) {
+            return arrayAccess(a.arrayName, a.index);
         } else if (expr instanceof BinaryExpr b) {
             String arg1 = generateExpr(b.left);
             String arg2 = generateExpr(b.right);
@@ -99,7 +120,7 @@ public class QuadrupleGenerator {
 
     /*
      * this will generate (=,var,_,val) like expression
-     * */
+     */
     public void assign(String var, Expr expr) {
 
         String value = generateExpr(expr);

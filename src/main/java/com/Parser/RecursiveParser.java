@@ -16,15 +16,14 @@ public class RecursiveParser {
     private int labelId = 0;
     private final QuadrupleGenerator gen = new QuadrupleGenerator();
     @Setter
-    String sourceCode= "";
+    String sourceCode = "";
 
-    @Setter//lombok annotation, 生成setter方法
+    @Setter // lombok annotation, 生成setter方法
     Map<Token, Integer> bugFinder = new HashMap<>();
 
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
     }
-
 
     private Token lookahead() {
         if (pos < tokens.size()) {
@@ -42,7 +41,7 @@ public class RecursiveParser {
         } else {
             // 当源代码存在语法错误，报错
             Integer i = bugFinder.get(t);
-//            System.out.println();
+            // System.out.println();
             throw new RuntimeException("Expected " + value + ", but found " + t.value);
         }
     }
@@ -61,7 +60,6 @@ public class RecursiveParser {
     private String newLabel() {
         return "L" + (labelId++);
     }
-
 
     // 程序入口
     public void parseProgram() {
@@ -133,7 +131,6 @@ public class RecursiveParser {
         return params;
     }
 
-
     // 处理语句
     // 不断调用parseStmt，直到遇到右大括号或文件结尾
     private void parseStmtList() {
@@ -141,7 +138,6 @@ public class RecursiveParser {
             parseStmt();
         }
     }
-
 
     // 识别语句是哪种类型
     private void parseStmt() {
@@ -168,7 +164,6 @@ public class RecursiveParser {
         }
     }
 
-
     private void parseIfStmt() {
         match("if");
         match("(");
@@ -186,7 +181,7 @@ public class RecursiveParser {
             gen.emitElLabel();
             gen.emitLabel(labelElse);
             match("else");
-            parseStmt();  // 处理else内容
+            parseStmt(); // 处理else内容
             gen.emitLabel(labelEnd);
         } else {
             gen.emitLabel(labelElse); // 没有else，else标签直接作为结束
@@ -224,15 +219,38 @@ public class RecursiveParser {
 
     private void parseDeclStmt() {
         match("int");
-        match(Token.Type.IDENTIFIER);
+        String varName = match(Token.Type.IDENTIFIER).value;
+
+        // Check if it's an array declaration: int a[10];
+        if (lookahead().value.equals("[")) {
+            match("[");
+            String size = match(Token.Type.NUMBER).value;
+            match("]");
+            gen.declareArray(varName, Integer.parseInt(size));
+        }
+        // Regular variable declaration: int a;
+
         match(";");
     }
 
     private void parseAssignStmt() {
         String var = match(Token.Type.IDENTIFIER).value;
-        match("=");
-        Expr expr = parseExpr();
-        gen.assign(var, expr);
+
+        // Check if it's array assignment: a[i] = expr;
+        if (lookahead().value.equals("[")) {
+            match("[");
+            Expr indexExpr = parseExpr();
+            match("]");
+            match("=");
+            Expr valueExpr = parseExpr();
+            gen.assignArray(var, indexExpr, valueExpr);
+        } else {
+            // Regular variable assignment: a = expr;
+            match("=");
+            Expr expr = parseExpr();
+            gen.assign(var, expr);
+        }
+
         match(";");
     }
 
@@ -264,11 +282,22 @@ public class RecursiveParser {
         return left;
     }
 
-    // 处理变量、数字、括号表达式
+    // 处理变量、数字、括号表达式、数组访问
     private Expr parseFactor() {
         Token t = lookahead();
         if (t.type == Token.Type.IDENTIFIER) {
-            return new VarExpr(match(Token.Type.IDENTIFIER).value);
+            String varName = match(Token.Type.IDENTIFIER).value;
+
+            // Check if it's array access: a[i]
+            if (lookahead().value.equals("[")) {
+                match("[");
+                Expr indexExpr = parseExpr();
+                match("]");
+                return new ArrayAccessExpr(varName, indexExpr);
+            } else {
+                // Regular variable
+                return new VarExpr(varName);
+            }
         } else if (t.type == Token.Type.NUMBER) {
             return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
         } else if (t.value.equals("(")) {
