@@ -12,11 +12,6 @@ $(document).ready(function () {
             processData: false,
             success: function (result) {
                 console.log(result);
-                // result.success ;
-                // var re = JSON.parse(result);
-                // console.log(re)
-                // var status = re["success"];
-                //
                 const success = result.success;
                 console.log("success = "+success)
                 if (!success) {
@@ -26,6 +21,7 @@ $(document).ready(function () {
 
                 } else {
                     var strings = result.res.toString().split("\n");
+                    $("#opt_area").css("color", "green");
                     $("#opt_area").text(strings.join("\n"));
                 }
                 // alert(data);
