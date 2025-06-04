@@ -69,7 +69,9 @@ public class RecursiveParser {
     // 判断是否为函数声明起始
     // 即int后面跟标识符，再跟(
     private boolean isFuncDeclStart() {
-        if(!lookahead().value.equals("int")) return false;
+        String value = lookahead().value;
+        if(!value.equals("int") && !value.equals("char")) return false;
+
         // 尝试看下一个和下下个
         if(pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
             if(pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
@@ -82,7 +84,8 @@ public class RecursiveParser {
     // 处理函数
     private void parseFuncDecl() {
         // 匹配返回类型
-        match("int");
+        String returnType = match(lookahead().value).value; // 获取int或char
+
         // 匹配函数名
         String funcName = match(Token.Type.IDENTIFIER).value;
         // 匹配左括号
@@ -107,7 +110,8 @@ public class RecursiveParser {
             return params;
         }
         do{
-            match("int");
+            // 匹配参数类型(int或char)
+            String type = match(lookahead().value).value;
             String paramName = match(Token.Type.IDENTIFIER).value;
             params.add(paramName);
             // 如果下一个是逗号，就继续
@@ -135,7 +139,7 @@ public class RecursiveParser {
     private void parseStmt() {
         Token t = lookahead();
         // 声明语句
-        if (t.value.equals("int")) {
+        if (t.value.equals("int") || t.value.equals("char")) {
             parseDeclStmt();
         }
         // 赋值语句
@@ -210,9 +214,10 @@ public class RecursiveParser {
     }
 
     private void parseDeclStmt() {
-        match("int");
-        match(Token.Type.IDENTIFIER);
+        String type = match(lookahead().value).value; // 获取int或char
+        String varName = match(Token.Type.IDENTIFIER).value;
         match(";");
+        // 可以在这里添加数据类型信息到符号表中
     }
 
     private void parseAssignStmt() {
@@ -258,14 +263,15 @@ public class RecursiveParser {
             return new VarExpr(match(Token.Type.IDENTIFIER).value);
         } else if (t.type == Token.Type.NUMBER) {
             return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
+        } else if (t.type == Token.Type.CHAR_LITERAL) {
+            return new CharExpr(match(Token.Type.CHAR_LITERAL).value.charAt(0));
         } else if (t.value.equals("(")) {
             match("(");
             Expr expr = parseExpr();
             match(")");
             return expr;
         } else {
-            // 当源代码存在语法错误，报错
-            throw new RuntimeException("Expected Identifier or Number, but found " + t.value);
+            throw new RuntimeException("Expected Identifier, Number or Character, but found " + t.value);
         }
     }
 

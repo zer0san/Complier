@@ -6,6 +6,7 @@ public class Token {
         KEYWORD,
         IDENTIFIER,
         NUMBER,
+        CHAR_LITERAL,
         OPERATOR,
         SEPARATOR,
         EOF

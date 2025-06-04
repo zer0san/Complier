@@ -98,8 +98,17 @@ public class QuadrupleGenerator {
     }
 
     public void assign(String var, Expr expr) {
-        String value = generateExpr(expr);
-        quds.add(new Quadruple("=", value, "_", var));
+        if (expr instanceof NumberExpr) {
+            quds.add(new Quadruple("=", ((NumberExpr) expr).value+"", "_", var));
+        } else if (expr instanceof CharExpr) {
+            // 处理字符字面量
+            quds.add(new Quadruple("=", "'" + ((CharExpr) expr).value + "'", "_", var));
+        } else if (expr instanceof VarExpr) {
+            quds.add(new Quadruple("=", ((VarExpr) expr).name, "_", var));
+        } else if (expr instanceof BinaryExpr) {
+            String result = generateExpr((BinaryExpr) expr);
+            quds.add(new Quadruple("=", result, "_", var));
+        }
     }
 
     public List<Quadruple> show() {

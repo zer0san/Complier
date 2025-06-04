@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Lexer {
     private static final Set<String> keywords = new HashSet<>(Arrays.asList(
-            "if", "else", "while", "for", "int", "return"
+            "if", "else", "while", "for", "int", "char", "return"
     ));
     private static final Set<Character> operators = new HashSet<>(Arrays.asList(
             '+', '-', '*', '/', '=', '<', '>', '!'
@@ -31,6 +31,8 @@ public class Lexer {
             char current = input.charAt(pos);
             if (Character.isWhitespace(current)) {
                 pos++;
+            } else if (current == '\'') {
+                readCharLiteral();
             } else if (Character.isLetter(current)) {
                 readIdentifierOrKeyword();
             } else if (Character.isDigit(current)) {
@@ -63,7 +65,43 @@ public class Lexer {
 //            System.out.println("IDENTIFIER: " + token);
         }
     }
+/*
+    private void readCharLiteral() {//char 类型
+        pos++; // 跳过开始的单引号
+        char value;
+        if (pos < input.length() && input.charAt(pos) != '\'') {
+            value = input.charAt(pos);
+            pos++;
+            if (pos < input.length() && input.charAt(pos) == '\'') {
+                tokens.add(new Token(Token.Type.CHAR_LITERAL, String.valueOf(value)));
+                pos++; // 跳过结束的单引号
+            } else {
+                throw new RuntimeException("Unclosed character literal");
+            }
+        } else {
+            throw new RuntimeException("Empty character literal");
+        }
+    }
 
+ */
+private void readCharLiteral() {
+    pos++; // 跳过开始的单引号
+    System.out.println("处理字符字面量，当前位置: " + pos);
+    char value;
+    if (pos < input.length() && input.charAt(pos) != '\'') {
+        value = input.charAt(pos);
+        pos++;
+        if (pos < input.length() && input.charAt(pos) == '\'') {
+            tokens.add(new Token(Token.Type.CHAR_LITERAL, String.valueOf(value)));
+            System.out.println("添加字符字面量: " + value);
+            pos++; // 跳过结束的单引号
+        } else {
+            throw new RuntimeException("Unclosed character literal");
+        }
+    } else {
+        throw new RuntimeException("Empty character literal");
+    }
+}
     private void readNumber() {
         int start = pos;
         while (pos < input.length() && Character.isDigit(input.charAt(pos))) {
