@@ -1,2 +1,7 @@
-int a = 0;
-int b = 0;
+int main(){
+int b;
+b=1;
+while(1){
+b =b-1;
+}
+}

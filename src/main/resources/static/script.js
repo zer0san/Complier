@@ -1,9 +1,32 @@
 $(document).ready(function () {
+    // 正确绑定 keydown 事件
+    $("#ipt_area").on("keydown", function(e) {
+        // 检查是否按下了 Tab 键
+        if (e.key === 'Tab' || e.keyCode === 9) {
+            // 阻止默认的 Tab 行为
+            e.preventDefault();
+
+            var indent = "    "; // 4 个空格作为缩进
+            var start = this.selectionStart;
+            var end = this.selectionEnd;
+            var value = this.value;
+            var selected = value.substring(start, end);
+
+            if (start !== end) {
+                // 如果选中了文本，缩进所有选中的行
+                var newText = selected.replace(/^/gm, indent);
+                this.value = value.substring(0, start) + newText + value.substring(end);
+                this.selectionStart = start;
+                this.selectionEnd = start + newText.length;
+            } else {
+                // 如果没有选中文本，只在光标位置插入缩进
+                this.value = value.substring(0, start) + indent + value.substring(end);
+                this.selectionStart = this.selectionEnd = start + indent.length;
+            }
+        }
+    });
+
     $('#upload').click(function (e) {
-
-        const formData = new FormData();
-        formData.append("sourceCode", $('#ipt_area').val());
-
         $.ajax({
             url: "http://localhost:8080/parse",
             type: "POST",
@@ -18,20 +41,16 @@ $(document).ready(function () {
                     var strings = result.msg?.toString().split("\n");
                     $("#opt_area").css("color", "red");
                     $("#opt_area").text(strings.join("\n"));
-
                 } else {
                     var strings = result.res.toString().split("\n");
                     $("#opt_area").css("color", "green");
                     $("#opt_area").text(strings.join("\n"));
                 }
-                // alert(data);
             },
             error: function (xhr, status, error) {
-                $("#opt_area").style = "color: red;";
-                // document.getElementById("opt_area").innerText = "解析失败，请检查输入代码是否正确！\n" + error.toString();
+                $("#opt_area").css("color", "red");
                 alert("failed" + error.toString());
             }
         });
-
     });
 });
