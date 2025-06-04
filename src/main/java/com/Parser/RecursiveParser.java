@@ -1,16 +1,25 @@
 package com.Parser;
+
 import java.util.*;
 
 import com.Parser.*;
 import com.Lexer.*;
 import com.Lexer.Token;
 import com.Parser.Quadruple.*;
+import lombok.Data;
+import lombok.Setter;
 
+@Data
 public class RecursiveParser {
     private final List<Token> tokens;
     private int pos = 0;
     private int labelId = 0;
     private final QuadrupleGenerator gen = new QuadrupleGenerator();
+    @Setter
+    String sourceCode= "";
+
+    @Setter//lombok annotation, 生成setter方法
+    Map<Token, Integer> bugFinder = new HashMap<>();
 
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
@@ -18,8 +27,9 @@ public class RecursiveParser {
 
 
     private Token lookahead() {
-        if (pos < tokens.size())
+        if (pos < tokens.size()) {
             return tokens.get(pos);
+        }
         return new Token(Token.Type.EOF, "");
     }
 
@@ -31,6 +41,8 @@ public class RecursiveParser {
             return t;
         } else {
             // 当源代码存在语法错误，报错
+            Integer i = bugFinder.get(t);
+//            System.out.println();
             throw new RuntimeException("Expected " + value + ", but found " + t.value);
         }
     }
@@ -53,11 +65,10 @@ public class RecursiveParser {
 
     // 程序入口
     public void parseProgram() {
-        while(lookahead().type != Token.Type.EOF) {
-            if(isFuncDeclStart()) {
+        while (lookahead().type != Token.Type.EOF) {
+            if (isFuncDeclStart()) {
                 parseFuncDecl();
-            }
-            else {
+            } else {
                 parseStmt();
             }
         }
@@ -69,10 +80,12 @@ public class RecursiveParser {
     // 判断是否为函数声明起始
     // 即int后面跟标识符，再跟(
     private boolean isFuncDeclStart() {
-        if(!lookahead().value.equals("int")) return false;
+        if (!lookahead().value.equals("int")) {
+            return false;
+        }
         // 尝试看下一个和下下个
-        if(pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
-            if(pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
+        if (pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
+            if (pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
                 return true;
             }
         }
@@ -103,21 +116,20 @@ public class RecursiveParser {
     private List<String> parseParamList() {
         List<String> params = new ArrayList<>();
         // 如果下一个是")"，则无参数
-        if(lookahead().value.equals(")")) {
+        if (lookahead().value.equals(")")) {
             return params;
         }
-        do{
+        do {
             match("int");
             String paramName = match(Token.Type.IDENTIFIER).value;
             params.add(paramName);
             // 如果下一个是逗号，就继续
-            if(lookahead().value.equals(",")) {
+            if (lookahead().value.equals(",")) {
                 match(",");
-            }
-            else {
+            } else {
                 break;
             }
-        }while(true);
+        } while (true);
         return params;
     }
 
@@ -151,6 +163,7 @@ public class RecursiveParser {
             parseWhileStmt();
         } else {
             // 当源代码存在语法错误，报错
+
             throw new RuntimeException("Expected DeclStmt, AssignStmt or Block, but found " + t.value);
         }
     }

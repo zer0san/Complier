@@ -1,5 +1,7 @@
 package com.Lexer;
 
+import lombok.Getter;
+
 import java.util.*;
 
 public class Lexer {
@@ -15,6 +17,8 @@ public class Lexer {
     private static final Set<Character> separators = new HashSet<>(Arrays.asList(
             '(', ')', '{', '}', ';', ','
     ));
+    @Getter
+    Map<Token, Integer> bugFinderMp = new HashMap<>();
 
     private final String input;
     private int pos;
@@ -38,7 +42,9 @@ public class Lexer {
             } else if (operators.contains(current)) {
                 readP();
             } else if (separators.contains(current)) {
-                tokens.add(new Token(Token.Type.SEPARATOR, String.valueOf(current)));
+                Token e = new Token(Token.Type.SEPARATOR, String.valueOf(current));
+                tokens.add(e);
+                bugFinderMp.put(e, pos);
 //                System.out.println("SEPARATOR: " + current);
                 pos++;
             } else {
@@ -56,10 +62,14 @@ public class Lexer {
         }
         String token = input.substring(start, pos);
         if (keywords.contains(token)) {
-            tokens.add(new Token(Token.Type.KEYWORD, token));
+            Token e = new Token(Token.Type.KEYWORD, token);
+            tokens.add(e);
+            bugFinderMp.put(e, pos);
 //            System.out.println("KEYWORD: " + token);
         } else {
-            tokens.add(new Token(Token.Type.IDENTIFIER, token));
+            Token e = new Token(Token.Type.IDENTIFIER, token);
+            tokens.add(e);
+            bugFinderMp.put(e, pos);
 //            System.out.println("IDENTIFIER: " + token);
         }
     }
@@ -70,7 +80,9 @@ public class Lexer {
             pos++;
         }
         String token = input.substring(start, pos);
-        tokens.add(new Token(Token.Type.NUMBER, token));
+        Token e = new Token(Token.Type.NUMBER, token);
+        tokens.add(e);
+        bugFinderMp.put(e, pos);
 //        System.out.println("NUMBER: " + token);
     }
 
@@ -83,20 +95,24 @@ public class Lexer {
 
         // 优先匹配双字符运算符
         if (two_operators.contains(twoChar)) {
-            tokens.add(new Token(Token.Type.OPERATOR, twoChar));
+            Token e = new Token(Token.Type.OPERATOR, twoChar);
+            tokens.add(e);
+            bugFinderMp.put(e, pos);
 //            System.out.println("OPERATOR: " + twoChar);
             pos += 2;
         } else {
-            tokens.add(new Token(Token.Type.OPERATOR, String.valueOf(current)));
+            Token e = new Token(Token.Type.OPERATOR, String.valueOf(current));
+            tokens.add(e);
+            bugFinderMp.put(e, pos);
 //            System.out.println("OPERATOR: " + current);
             pos++;
         }
     }
 
-    public List<Token> show(){
-        for(var t : tokens){
+    public List<Token> show() {
+        for (var t : tokens) {
             System.out.println(t);
         }
-        return tokens ;
+        return tokens;
     }
 }

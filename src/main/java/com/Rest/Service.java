@@ -21,20 +21,21 @@ public class Service {
 
     @PostMapping("/parse")
     @ResponseBody
-    public String parse(@RequestBody Map<String,String> payload ) {
+    public String parse(@RequestBody Map<String, String> payload) {
         try {
             String sourceCode = payload.get("sourceCode");
             if (sourceCode == null || sourceCode.isEmpty()) {
                 return "error: sourceCode is empty";
             }
             // For debugging purposes, you can print the source code
-//            byte[] bytes = file.getBytes();
+            // byte[] bytes = file.getBytes();
 
-//            List.of(bytes).stream().filter(bt -> bt != '\n'&&bt!='\r').collect(Collectors.toList());
+            // List.of(bytes).stream().filter(bt -> bt !=
+            // '\n'&&bt!='\r').collect(Collectors.toList());
 
-//            Arrays.stream(bytes).forEach(b -> System.out.printf("%02x ", b));
+            // Arrays.stream(bytes).forEach(b -> System.out.printf("%02x ", b));
             // String s =StrUtil.toString(bytes);
-//            String s = new String(bytes);
+            // String s = new String(bytes);
             sourceCode = sourceCode.replace('\r', ' ').replace('\n', ' ');
             System.out.printf("%s", sourceCode);
             System.out.println();

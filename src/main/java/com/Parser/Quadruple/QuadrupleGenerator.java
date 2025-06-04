@@ -42,18 +42,18 @@ public class QuadrupleGenerator {
     }
 
     // wh 标签
-    public void emitWhLabel(){
+    public void emitWhLabel() {
         quds.add(new Quadruple("wh", "_", "_", "_"));
     }
 
     // 函数开始标签
     public void emitFuncLabel(String label) {
-        quds.add(new Quadruple("FuncStart","_","_",label));
+        quds.add(new Quadruple("FuncStart", "_", "_", label));
     }
 
     // 函数结束标签
-    public void emitFuncEnd(String label){
-        quds.add(new Quadruple("FuncEnd","_","_",label));
+    public void emitFuncEnd(String label) {
+        quds.add(new Quadruple("FuncEnd", "_", "_", label));
     }
 
 
@@ -97,7 +97,11 @@ public class QuadrupleGenerator {
         return null;
     }
 
+    /*
+     * this will generate (=,var,_,val) like expression
+     * */
     public void assign(String var, Expr expr) {
+
         String value = generateExpr(expr);
         quds.add(new Quadruple("=", value, "_", var));
     }
