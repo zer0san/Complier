@@ -1,5 +1,7 @@
 package com.Lexer;
 
+import lombok.Getter;
+
 import java.util.*;
 
 public class Lexer {
@@ -73,7 +75,7 @@ public class Lexer {
         }
     }
 
- */
+
 private void readCharLiteral() {
     pos++; // 跳过开始的单引号
     System.out.println("处理字符字面量，当前位置: " + pos);
