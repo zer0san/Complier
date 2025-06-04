@@ -1,16 +1,25 @@
 package com.Parser;
+
 import java.util.*;
 
 import com.Parser.*;
 import com.Lexer.*;
 import com.Lexer.Token;
 import com.Parser.Quadruple.*;
+import lombok.Data;
+import lombok.Setter;
 
+@Data
 public class RecursiveParser {
     private final List<Token> tokens;
     private int pos = 0;
     private int labelId = 0;
     private final QuadrupleGenerator gen = new QuadrupleGenerator();
+    @Setter
+    String sourceCode = "";
+
+    @Setter // lombok annotation, 生成setter方法
+    Map<Token, Integer> bugFinder = new HashMap<>();
 
     public RecursiveParser(List<Token> tokens) {
         this.tokens = tokens;
@@ -18,8 +27,9 @@ public class RecursiveParser {
 
 
     private Token lookahead() {
-        if (pos < tokens.size())
+        if (pos < tokens.size()) {
             return tokens.get(pos);
+        }
         return new Token(Token.Type.EOF, "");
     }
 
@@ -31,6 +41,8 @@ public class RecursiveParser {
             return t;
         } else {
             // 当源代码存在语法错误，报错
+            Integer i = bugFinder.get(t);
+            // System.out.println();
             throw new RuntimeException("Expected " + value + ", but found " + t.value);
         }
     }
@@ -53,11 +65,10 @@ public class RecursiveParser {
 
     // 程序入口
     public void parseProgram() {
-        while(lookahead().type != Token.Type.EOF) {
-            if(isFuncDeclStart()) {
+        while (lookahead().type != Token.Type.EOF) {
+            if (isFuncDeclStart()) {
                 parseFuncDecl();
-            }
-            else {
+            } else {
                 parseStmt();
             }
         }
@@ -73,8 +84,8 @@ public class RecursiveParser {
         if(!value.equals("int") && !value.equals("char")) return false;
 
         // 尝试看下一个和下下个
-        if(pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
-            if(pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
+        if (pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
+            if (pos + 2 < tokens.size() && tokens.get(pos + 2).value.equals("(")) {
                 return true;
             }
         }
@@ -106,7 +117,7 @@ public class RecursiveParser {
     private List<String> parseParamList() {
         List<String> params = new ArrayList<>();
         // 如果下一个是")"，则无参数
-        if(lookahead().value.equals(")")) {
+        if (lookahead().value.equals(")")) {
             return params;
         }
         do{
@@ -214,17 +225,40 @@ public class RecursiveParser {
     }
 
     private void parseDeclStmt() {
+//        match("int");
         String type = match(lookahead().value).value; // 获取int或char
         String varName = match(Token.Type.IDENTIFIER).value;
+
+        // Check if it's an array declaration: int a[10];
+        if (lookahead().value.equals("[")) {
+            match("[");
+            String size = match(Token.Type.NUMBER).value;
+            match("]");
+            gen.declareArray(varName, Integer.parseInt(size));
+        }
+        // Regular variable declaration: int a;
+
         match(";");
-        // 可以在这里添加数据类型信息到符号表中
     }
 
     private void parseAssignStmt() {
         String var = match(Token.Type.IDENTIFIER).value;
-        match("=");
-        Expr expr = parseExpr();
-        gen.assign(var, expr);
+
+        // Check if it's array assignment: a[i] = expr;
+        if (lookahead().value.equals("[")) {
+            match("[");
+            Expr indexExpr = parseExpr();
+            match("]");
+            match("=");
+            Expr valueExpr = parseExpr();
+            gen.assignArray(var, indexExpr, valueExpr);
+        } else {
+            // Regular variable assignment: a = expr;
+            match("=");
+            Expr expr = parseExpr();
+            gen.assign(var, expr);
+        }
+
         match(";");
     }
 
@@ -256,11 +290,22 @@ public class RecursiveParser {
         return left;
     }
 
-    // 处理变量、数字、括号表达式
+    // 处理变量、数字、括号表达式、数组访问
     private Expr parseFactor() {
         Token t = lookahead();
         if (t.type == Token.Type.IDENTIFIER) {
-            return new VarExpr(match(Token.Type.IDENTIFIER).value);
+            String varName = match(Token.Type.IDENTIFIER).value;
+
+            // Check if it's array access: a[i]
+            if (lookahead().value.equals("[")) {
+                match("[");
+                Expr indexExpr = parseExpr();
+                match("]");
+                return new ArrayAccessExpr(varName, indexExpr);
+            } else {
+                // Regular variable
+                return new VarExpr(varName);
+            }
         } else if (t.type == Token.Type.NUMBER) {
             return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
         } else if (t.type == Token.Type.CHAR_LITERAL) {
@@ -271,7 +316,8 @@ public class RecursiveParser {
             match(")");
             return expr;
         } else {
-            throw new RuntimeException("Expected Identifier, Number or Character, but found " + t.value);
+            // 当源代码存在语法错误，报错
+            throw new RuntimeException("Expected Identifier or Number, but found " + t.value);
         }
     }
 

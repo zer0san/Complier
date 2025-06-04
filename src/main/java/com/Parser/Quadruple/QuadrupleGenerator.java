@@ -2,6 +2,8 @@ package com.Parser.Quadruple;
 
 import java.util.*;
 
+import static java.lang.String.format;
+
 public class QuadrupleGenerator {
     private int tempId = 0;
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
@@ -42,20 +44,39 @@ public class QuadrupleGenerator {
     }
 
     // wh 标签
-    public void emitWhLabel(){
+    public void emitWhLabel() {
         quds.add(new Quadruple("wh", "_", "_", "_"));
     }
 
     // 函数开始标签
     public void emitFuncLabel(String label) {
-        quds.add(new Quadruple("FuncStart","_","_",label));
+        quds.add(new Quadruple("FuncStart", "_", "_", label));
     }
 
     // 函数结束标签
-    public void emitFuncEnd(String label){
-        quds.add(new Quadruple("FuncEnd","_","_",label));
+    public void emitFuncEnd(String label) {
+        quds.add(new Quadruple("FuncEnd", "_", "_", label));
     }
 
+    // 数组声明
+    public void declareArray(String arrayName, int size) {
+        quds.add(new Quadruple("ARRAY_DECL", arrayName, Integer.toString(size), "_"));
+    }
+
+    // 数组访问
+    public String arrayAccess(String arrayName, Expr indexExpr) {
+        String indexValue = generateExpr(indexExpr);
+        String temp = newTemp();
+        quds.add(new Quadruple("=", arrayName + indexValue, "_", temp));
+        return temp;
+    }
+
+    // 数组赋值
+    public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
+        String indexValue = generateExpr(indexExpr);
+        String value = generateExpr(valueExpr);
+        quds.add(new Quadruple("=", value, "_", arrayName + indexValue));
+    }
 
     boolean isNumber(String s) {
         return s.matches("-?\\d+");
@@ -71,6 +92,8 @@ public class QuadrupleGenerator {
             return Integer.toString(n.value);
         } else if (expr instanceof VarExpr v) {
             return v.name;
+        } else if (expr instanceof ArrayAccessExpr a) {
+            return arrayAccess(a.arrayName, a.index);
         } else if (expr instanceof BinaryExpr b) {
             String arg1 = generateExpr(b.left);
             String arg2 = generateExpr(b.right);
