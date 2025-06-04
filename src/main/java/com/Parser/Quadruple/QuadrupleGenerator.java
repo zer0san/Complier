@@ -67,7 +67,7 @@ public class QuadrupleGenerator {
     public String arrayAccess(String arrayName, Expr indexExpr) {
         String indexValue = generateExpr(indexExpr);
         String temp = newTemp();
-        quds.add(new Quadruple("=", temp, "_", arrayName + indexValue));
+        quds.add(new Quadruple("=", arrayName + indexValue, "_", temp));
         return temp;
     }
 
@@ -75,7 +75,7 @@ public class QuadrupleGenerator {
     public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
         String indexValue = generateExpr(indexExpr);
         String value = generateExpr(valueExpr);
-        quds.add(new Quadruple("=", arrayName + indexValue, "_", value));
+        quds.add(new Quadruple("=", value, "_", arrayName + indexValue));
     }
 
     boolean isNumber(String s) {
