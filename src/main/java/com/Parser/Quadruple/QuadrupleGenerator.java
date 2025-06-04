@@ -128,6 +128,8 @@ public class QuadrupleGenerator {
         } else if (expr instanceof CharExpr) {
             // 处理字符字面量
             quds.add(new Quadruple("=", "'" + ((CharExpr) expr).value + "'", "_", var));
+        } else if (expr instanceof StringExpr) {
+            quds.add(new Quadruple("=", "\"" + ((StringExpr) expr).value + "\"", "_", var));
         } else if (expr instanceof VarExpr) {
             quds.add(new Quadruple("=", ((VarExpr) expr).name, "_", var));
         } else if (expr instanceof BinaryExpr) {

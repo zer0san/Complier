@@ -81,7 +81,7 @@ public class RecursiveParser {
     // 即int后面跟标识符，再跟(
     private boolean isFuncDeclStart() {
         String value = lookahead().value;
-        if(!value.equals("int") && !value.equals("char")) return false;
+        if(!value.equals("int") && !value.equals("char") && !value.equals("string")) return false;
 
         // 尝试看下一个和下下个
         if (pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
@@ -150,7 +150,7 @@ public class RecursiveParser {
     private void parseStmt() {
         Token t = lookahead();
         // 声明语句
-        if (t.value.equals("int") || t.value.equals("char")) {
+        if (t.value.equals("int") || t.value.equals("char") || t.value.equals("string")) {
             parseDeclStmt();
         }
         // 赋值语句
@@ -310,6 +310,8 @@ public class RecursiveParser {
             return new NumberExpr(Integer.parseInt(match(Token.Type.NUMBER).value));
         } else if (t.type == Token.Type.CHAR_LITERAL) {
             return new CharExpr(match(Token.Type.CHAR_LITERAL).value.charAt(0));
+        } else if (t.type == Token.Type.STRING_LITERAL) {
+            return new StringExpr(match(Token.Type.STRING_LITERAL).value);
         } else if (t.value.equals("(")) {
             match("(");
             Expr expr = parseExpr();
@@ -317,7 +319,7 @@ public class RecursiveParser {
             return expr;
         } else {
             // 当源代码存在语法错误，报错
-            throw new RuntimeException("Expected Identifier or Number, but found " + t.value);
+            throw new RuntimeException("Expected Identifier, Number, Character or String, but found " + t.value);
         }
     }
 

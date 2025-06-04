@@ -9,6 +9,7 @@ public class Token {
         CHAR_LITERAL,
         OPERATOR,
         SEPARATOR,
+        STRING_LITERAL,
         EOF
     }
 
