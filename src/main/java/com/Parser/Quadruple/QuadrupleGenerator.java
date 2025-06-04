@@ -75,7 +75,7 @@ public class QuadrupleGenerator {
     public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
         String indexValue = generateExpr(indexExpr);
         String value = generateExpr(valueExpr);
-        quds.add(new Quadruple("=", value, "_", arrayName + indexValue));
+        quds.add(new Quadruple("=", value, "_", arrayName + "[" + indexValue + "]"));
     }
 
     boolean isNumber(String s) {
@@ -90,6 +90,8 @@ public class QuadrupleGenerator {
     String generateExpr(Expr expr) {
         if (expr instanceof NumberExpr n) {
             return Integer.toString(n.value);
+        } else if (expr instanceof CharExpr c) {
+            return "'" + Character.toString(c.value) + "'";
         } else if (expr instanceof VarExpr v) {
             return v.name;
         } else if (expr instanceof ArrayAccessExpr a) {
@@ -122,7 +124,7 @@ public class QuadrupleGenerator {
 
     public void assign(String var, Expr expr) {
         if (expr instanceof NumberExpr) {
-            quds.add(new Quadruple("=", ((NumberExpr) expr).value+"", "_", var));
+            quds.add(new Quadruple("=", ((NumberExpr) expr).value + "", "_", var));
         } else if (expr instanceof CharExpr) {
             // 处理字符字面量
             quds.add(new Quadruple("=", "'" + ((CharExpr) expr).value + "'", "_", var));
