@@ -2,6 +2,8 @@ package com.Parser.Quadruple;
 
 import java.util.*;
 
+import static java.lang.String.format;
+
 public class QuadrupleGenerator {
     private int tempId = 0;
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
@@ -65,7 +67,7 @@ public class QuadrupleGenerator {
     public String arrayAccess(String arrayName, Expr indexExpr) {
         String indexValue = generateExpr(indexExpr);
         String temp = newTemp();
-        quds.add(new Quadruple("ARRAY_ACCESS", arrayName, indexValue, temp));
+        quds.add(new Quadruple("=", temp, "_", arrayName + indexValue));
         return temp;
     }
 
@@ -73,7 +75,7 @@ public class QuadrupleGenerator {
     public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
         String indexValue = generateExpr(indexExpr);
         String value = generateExpr(valueExpr);
-        quds.add(new Quadruple("ARRAY_ASSIGN", arrayName, indexValue, value));
+        quds.add(new Quadruple("=", arrayName + indexValue, "_", value));
     }
 
     boolean isNumber(String s) {
