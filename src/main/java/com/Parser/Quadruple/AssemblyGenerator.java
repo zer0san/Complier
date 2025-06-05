@@ -42,7 +42,7 @@ public class AssemblyGenerator {
 
         // 代码段开始
         assemblyCode.append(".CODE\n");
-        assemblyCode.append("MAIN PROC\n");
+//        assemblyCode.append("MAIN PROC\n");
         assemblyCode.append("    MOV AX, @DATA\n");
         assemblyCode.append("    MOV DS, AX\n\n");
 
@@ -65,8 +65,8 @@ public class AssemblyGenerator {
         // 程序结束
         assemblyCode.append("\n    MOV AX, 4C00H\n");
         assemblyCode.append("    INT 21H\n");
-        assemblyCode.append("MAIN ENDP\n");
-        assemblyCode.append("END MAIN\n");
+//        assemblyCode.append("MAIN ENDP\n");
+//        assemblyCode.append("END MAIN\n");
     }
 
     private void collectVariable(String name) {
@@ -140,7 +140,7 @@ public class AssemblyGenerator {
 
 
     private void generateFunctionEnd(Quadruple q) {
-        assemblyCode.append("    RET\n");
+//        assemblyCode.append("    RET\n");
         assemblyCode.append(format("%s ENDP\n", currentFunction));
     }
 
