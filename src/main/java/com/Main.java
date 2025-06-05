@@ -26,6 +26,10 @@ public class Main {
 
             Lexer lexer = new Lexer(s);
             List<Token> tokens = lexer.analyze();
+
+            String standardTokens = lexer.getStandardTokenSequence();
+            //System.out.println(standardTokens);
+            //lexer.generateStandardTokens();
             System.out.println("词法分析结果:");
             lexer.show();
             // 语法分析
@@ -52,7 +56,8 @@ public class Main {
             List<String> rTokens = tokens.stream().map(Token::toString).collect(Collectors.toList());
             List<String> collect = qds.stream().map(Quadruple::toString).collect(Collectors.toList());
             rTokens.addAll(collect);
-            return Result.ok(StrUtil.join("\n", rTokens));
+//
+            return Result.ok(StrUtil.join("\n", rTokens),standardTokens,lexer);
         } catch (Exception e) {
             e.printStackTrace();
             return Result.fail(e.getMessage());
