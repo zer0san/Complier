@@ -8,6 +8,7 @@ import lombok.Data;
 public class Result {
     String res;
     String msg;
+
     boolean success;
 
     public static Result fail(String msg) {

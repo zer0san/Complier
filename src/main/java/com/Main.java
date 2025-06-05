@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.Lexer.*;
 
 import com.Parser.*;
+import com.Parser.Quadruple.AssemblyGenerator;
 import com.Parser.Quadruple.Quadruple;
 import com.Rest.Result;
 import com.sun.source.tree.ReturnTree;
@@ -49,6 +50,9 @@ public class Main {
                 return Result.fail("syntax error" + e.getMessage()+"\n" + errorMessage);
             }
             List<Quadruple> qds = parser.show();
+            AssemblyGenerator asmGen = new AssemblyGenerator();
+            asmGen.generateAssembly(qds);
+            asmGen.show();
             List<String> rTokens = tokens.stream().map(Token::toString).collect(Collectors.toList());
             List<String> collect = qds.stream().map(Quadruple::toString).collect(Collectors.toList());
             rTokens.addAll(collect);
