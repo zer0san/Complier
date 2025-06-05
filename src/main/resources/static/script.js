@@ -39,13 +39,16 @@ $(document).ready(function () {
                 console.log("success = "+success)
                 if (!success) {
                     var strings = result.msg?.toString().split("\n");
-                    $("#opt_area").css("color", "red");
+                    $("#output > *").css("color", "red");
                     $("#opt_area").text(strings.join("\n"));
+                    $("#tokens").text("");
+                    $("#asm").text("");
                 } else {
                     var strings = result.res.toString().split("\n");
-                    $("#opt_area").css("color", "green");
-                    $("#opt_area").text(strings.join("\n")+result.tokens);
-
+                    $("#output > *").css("color", "green");
+                    $("#opt_area").text(strings.join("\n"));
+                    $("#tokens").text(result.tokens);
+                    $("#asm").text(result.asmCode);
                 }
             },
             error: function (xhr, status, error) {
@@ -54,4 +57,23 @@ $(document).ready(function () {
             }
         });
     });
+    function showTable(data){
+        console.log(data)
+    }
 });
+
+// @Getter
+// private Map<String, Integer> keywordTable = new HashMap<>();
+//
+// @Getter
+// private Map<String, Integer> identifierTable = new HashMap<>();
+//
+// @Getter
+// private Map<String, Integer> constantTable = new HashMap<>();
+//
+// @Getter
+// private Map<String, Integer> operatorTable = new HashMap<>();
+// String tokens;
+//
+// @Getter
+// private Map<String, Integer> separatorTable = new HashMap<>();

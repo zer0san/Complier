@@ -33,8 +33,10 @@ public class Result {
     public static Result fail(String msg) {
         return Result.builder().success(false).msg(msg).build();
     }
-    public static  Result ok(String res,String tokens,Lexer lexer) {
-        Result r = Result.builder().tokens(tokens).success(true).res(res).build();
+    public String asmCode;
+
+    public static  Result ok(String res,String tokens,String asmCode,Lexer lexer) {
+        Result r = Result.builder().tokens(tokens).success(true).res(res).asmCode(asmCode).build();
         r.setMap(lexer);
         return r;
     }

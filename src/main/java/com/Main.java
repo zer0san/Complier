@@ -57,12 +57,12 @@ public class Main {
             // 目标代码生成
             AssemblyGenerator asmGen = new AssemblyGenerator();
             asmGen.generateAssembly(qds);
-            asmGen.show();
+            String asmCode = asmGen.show();
             List<String> rTokens = tokens.stream().map(Token::toString).collect(Collectors.toList());
             List<String> collect = qds.stream().map(Quadruple::toString).collect(Collectors.toList());
             rTokens.addAll(collect);
 //
-            return Result.ok(StrUtil.join("\n", rTokens),standardTokens,lexer);
+            return Result.ok(StrUtil.join("\n", rTokens),standardTokens,asmCode,lexer);
         } catch (Exception e) {
             e.printStackTrace();
             return Result.fail(e.getMessage());

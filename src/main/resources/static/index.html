@@ -13,9 +13,7 @@
 
     <div class="container">
         <div id="input" class="card">
-            <textarea id="ipt_area" placeholder="请输入内容..."
-                      onsubmit="showFileContent"
-            >
+            <textarea id="ipt_area" placeholder="请输入内容..." onsubmit="showFileContent">
                 int a;
                 b = 1;
             </textarea>
@@ -28,6 +26,8 @@
         <div id="output" class="card">
             <div id="opt_title">结果输出</div>
             <textarea id="opt_area" placeholder="这里将显示结果..." readonly></textarea>
+            <textarea id="asm" placeholder="asmCode" readonly></textarea>
+            <textarea id="tokens" placeholder="tokens" readonly></textarea>
         </div>
     </div>
 </body>

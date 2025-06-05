@@ -122,11 +122,11 @@ public class Lexer {
         separatorTable.clear();
 
         // 创建符号表
-        Map<String, Integer> keywordTable = new HashMap<>();
-        Map<String, Integer> identifierTable = new HashMap<>();
-        Map<String, Integer> constantTable = new HashMap<>();
-        Map<String, Integer> operatorTable = new HashMap<>();
-        Map<String, Integer> separatorTable = new HashMap<>();
+        this.keywordTable = new HashMap<>();
+        this.identifierTable = new HashMap<>();
+        this.constantTable = new HashMap<>();
+        this.operatorTable = new HashMap<>();
+        this.separatorTable = new HashMap<>();
 
         // 初始化计数器和映射
         Map<String, Integer> typeCounter = new HashMap<>();
