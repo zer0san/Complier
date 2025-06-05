@@ -16,17 +16,19 @@ public class AssemblyGenerator {
         assemblyCode.append(".MODEL SMALL\n");
         assemblyCode.append(".STACK 100h\n");
         assemblyCode.append(".DATA\n");
-        // 数据段变量稍后插入
-        // .CODE 段先占位
+        // .CODE 段稍后插入
     }
 
     public void generateAssembly(List<Quadruple> quadruples) {
-        // 先收集变量声明
+        // 收集函数名（用于避免函数名当作变量）
         for (Quadruple q : quadruples) {
-            if ("FuncStart".equals(q.op)) {
-                functionNames.add(q.result); // 提前识别函数名
-                continue;
+            if ("FuncStart".equals(q.op) && q.result != null) {
+                functionNames.add(q.result);
             }
+        }
+
+        // 收集变量声明
+        for (Quadruple q : quadruples) {
             collectVariable(q.arg1);
             collectVariable(q.arg2);
             collectVariable(q.result);
@@ -40,13 +42,16 @@ public class AssemblyGenerator {
             assemblyCode.append(decl);
         }
 
-        // 代码段开始
+        // 代码段开始，使用 _start 作为入口
         assemblyCode.append(".CODE\n");
-//        assemblyCode.append("MAIN PROC\n");
+        assemblyCode.append("_start:\n");
         assemblyCode.append("    MOV AX, @DATA\n");
-        assemblyCode.append("    MOV DS, AX\n\n");
+        assemblyCode.append("    MOV DS, AX\n");
+        assemblyCode.append("    CALL main\n");
+        assemblyCode.append("    MOV AX, 4C00H\n");
+        assemblyCode.append("    INT 21H\n\n");
 
-        // 生成指令
+        // 生成中间代码对应汇编
         for (Quadruple q : quadruples) {
             switch (q.op) {
                 case "=" -> generateAssignment(q);
@@ -63,10 +68,7 @@ public class AssemblyGenerator {
         }
 
         // 程序结束
-        assemblyCode.append("\n    MOV AX, 4C00H\n");
-        assemblyCode.append("    INT 21H\n");
-//        assemblyCode.append("MAIN ENDP\n");
-//        assemblyCode.append("END MAIN\n");
+        assemblyCode.append("END _start\n");
     }
 
     private void collectVariable(String name) {
@@ -75,15 +77,16 @@ public class AssemblyGenerator {
         if (Character.isLetter(name.charAt(0))
                 && !declaredVariables.contains(name)
                 && !isReserved(name)
-                && !functionNames.contains(name)) // 👈 不加入函数名
-        {
+                && !functionNames.contains(name)) {
             declaredVariables.add(name);
         }
     }
 
-
     private boolean isReserved(String name) {
-        return name.equals("AX") || name.equals("BX") || name.equals("CX") || name.equals("DX");
+        return switch (name.toUpperCase()) {
+            case "AX", "BX", "CX", "DX" -> true;
+            default -> false;
+        };
     }
 
     private void generateAssignment(Quadruple q) {
@@ -133,15 +136,14 @@ public class AssemblyGenerator {
     }
 
     private void generateFunctionStart(Quadruple q) {
-        currentFunction = q.result.toUpperCase();
-        functionNames.add(q.result); // 👈 添加到函数名集合
+        currentFunction = q.result.toLowerCase();
+        functionNames.add(currentFunction);
         assemblyCode.append(format("%s PROC\n", currentFunction));
     }
 
-
     private void generateFunctionEnd(Quadruple q) {
-//        assemblyCode.append("    RET\n");
-        assemblyCode.append(format("%s ENDP\n", currentFunction));
+        assemblyCode.append("    RET\n");
+        assemblyCode.append(format("%s ENDP\n\n", currentFunction));
     }
 
     private void generateArrayDeclaration(Quadruple q) {
@@ -165,7 +167,6 @@ public class AssemblyGenerator {
     public void show() {
         for (String line : assemblyCode.toString().split("\n")) {
             System.out.println(line);
-
         }
     }
 }
