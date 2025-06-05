@@ -164,9 +164,10 @@ public class AssemblyGenerator {
         return assemblyCode.toString();
     }
 
-    public void show() {
+    public String show() {
         for (String line : assemblyCode.toString().split("\n")) {
             System.out.println(line);
         }
+        return assemblyCode.toString();
     }
 }
