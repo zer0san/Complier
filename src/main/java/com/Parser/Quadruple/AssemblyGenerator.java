@@ -63,12 +63,41 @@ public class AssemblyGenerator {
                 case "FuncStart" -> generateFunctionStart(q);
                 case "FuncEnd" -> generateFunctionEnd(q);
                 case "ARRAY_DECL" -> generateArrayDeclaration(q);
+                case "call" -> {
+                    // 保存现场
+                    assemblyCode.append("    PUSH AX\n");
+                    assemblyCode.append("    PUSH BX\n");
+                    assemblyCode.append("    PUSH CX\n");
+                    assemblyCode.append("    PUSH DX\n");
+
+                    // 调用函数
+                    assemblyCode.append(format("    CALL %s\n", q.arg1.toUpperCase()));
+
+                    // 恢复现场
+                    assemblyCode.append("    POP DX\n");
+                    assemblyCode.append("    POP CX\n");
+                    assemblyCode.append("    POP BX\n");
+                    assemblyCode.append("    POP AX\n");
+
+                    // 如果有返回值，保存到目标变量
+                    if (!q.result.equals("_")) {
+                        assemblyCode.append(format("    MOV %s, AX\n", q.result));
+                    }
+                }
+                case "return" -> generateReturnStatement(q);
                 default -> throw new RuntimeException("Unsupported operation: " + q.op);
             }
         }
 
         // 程序结束
         assemblyCode.append("END _start\n");
+    }
+    public void generateReturnStatement(Quadruple q) {
+        if (!q.arg1.equals("_")) {
+            // 有返回值
+            assemblyCode.append(format("    MOV AX, %s\n", toOperand(q.arg1)));
+        }
+        assemblyCode.append("    RET\n");
     }
 
     private void collectVariable(String name) {

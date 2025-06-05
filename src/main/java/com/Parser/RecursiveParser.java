@@ -61,7 +61,21 @@ public class RecursiveParser {
     private String newLabel() {
         return "L" + (labelId++);
     }
+    //return
+    private void parseReturnStmt() {
+        match("return");
 
+        // 检查是否有返回值，如果分号前有表达式则解析
+        Expr returnExpr = null;
+        if (!lookahead().value.equals(";")) {
+            returnExpr = parseExpr();
+        }
+
+        match(";");
+
+        // 使用QuadrupleGenerator中已有的returnStmt方法
+        gen.returnStmt(returnExpr);
+    }
 
     // 程序入口
     public void parseProgram() {
@@ -94,46 +108,47 @@ public class RecursiveParser {
 
     // 处理函数
     private void parseFuncDecl() {
-        // 匹配返回类型
-        String returnType = match(lookahead().value).value; // 获取int或char
-
-        // 匹配函数名
+        String returnType = match(lookahead().value).value;
         String funcName = match(Token.Type.IDENTIFIER).value;
-        // 匹配左括号
         match("(");
-        // 匹配参数列表
-        List<String> argList = parseParamList();
-        // 匹配右括号
+        List<String[]> paramsWithTypes = parseParamList();
         match(")");
-        // 生成函数入口标签
+
+        List<String> paramNames = new ArrayList<>();
+        List<String> paramTypes = new ArrayList<>();
+
+        for (String[] param : paramsWithTypes) {
+            paramTypes.add(param[0]);
+            paramNames.add(param[1]);
+        }
+
         gen.emitFuncLabel(funcName);
-        // 进入函数体
+        gen.emitFuncParam(returnType, funcName, paramNames);
         parseBlock();
-        // 生成函数返回/结束标记
         gen.emitFuncEnd(funcName);
     }
 
     // 参数列表解析，支持int a或者空
-    private List<String> parseParamList() {
-        List<String> params = new ArrayList<>();
-        // 如果下一个是")"，则无参数
+    private List<String[]> parseParamList() {
+        List<String[]> paramsWithTypes = new ArrayList<>();
+
         if (lookahead().value.equals(")")) {
-            return params;
+            return paramsWithTypes;
         }
-        do{
-            // 匹配参数类型(int或char)
-            String type = match(lookahead().value).value;
+
+        do {
+            String type = match(lookahead().value).value; // 获取参数类型
             String paramName = match(Token.Type.IDENTIFIER).value;
-            params.add(paramName);
-            // 如果下一个是逗号，就继续
+            paramsWithTypes.add(new String[]{type, paramName});
+
             if(lookahead().value.equals(",")) {
                 match(",");
-            }
-            else {
+            } else {
                 break;
             }
-        }while(true);
-        return params;
+        } while(true);
+
+        return paramsWithTypes;
     }
 
 
@@ -145,7 +160,29 @@ public class RecursiveParser {
         }
     }
 
+    // 在 RecursiveParser 类中添加这个方法
+    private Expr parseFunctionCall(String funcName) {
+        List<Expr> arguments = new ArrayList<>();
+        match("(");
 
+        // 解析参数列表
+        if (!lookahead().value.equals(")")) {
+            do {
+                Expr arg = parseExpr();  // 解析参数表达式
+                arguments.add(arg);      // 添加到参数列表
+
+                // 检查是否还有更多参数
+                if (lookahead().value.equals(",")) {
+                    match(",");
+                } else {
+                    break;
+                }
+            } while (true);
+        }
+
+        match(")");
+        return new FunctionCallExpr(funcName, arguments);
+    }
     // 识别语句是哪种类型
     private void parseStmt() {
         Token t = lookahead();
@@ -153,9 +190,25 @@ public class RecursiveParser {
         if (t.value.equals("int") || t.value.equals("char") || t.value.equals("string")) {
             parseDeclStmt();
         }
-        // 赋值语句
+        // return语句
+        else if (t.value.equals("return")) {
+            parseReturnStmt();
+        }
+        // 赋值语句或函数调用
         else if (t.type == Token.Type.IDENTIFIER) {
-            parseAssignStmt();
+            String id = match(Token.Type.IDENTIFIER).value;
+            if (lookahead().value.equals("(")) {
+                // 函数调用
+                Expr funcCall = parseFunctionCall(id);
+                match(";");
+                gen.generateFunctionCall((FunctionCallExpr)funcCall);
+            } else if (lookahead().value.equals("=")) {
+                // 赋值语句
+                match("=");
+                Expr expr = parseExpr();
+                gen.assign(id, expr);
+                match(";");
+            }
         }
         // 代码块
         else if (t.value.equals("{")) {
@@ -279,6 +332,8 @@ public class RecursiveParser {
         return left;
     }
 
+
+
     // 处理乘除表达式
     private Expr parseTerm() {
         Expr left = parseFactor();
@@ -295,9 +350,12 @@ public class RecursiveParser {
         Token t = lookahead();
         if (t.type == Token.Type.IDENTIFIER) {
             String varName = match(Token.Type.IDENTIFIER).value;
-
+            // 检查是否是函数调用
+            if (lookahead().value.equals("(")) {
+                return parseFunctionCall(varName);
+            }
             // Check if it's array access: a[i]
-            if (lookahead().value.equals("[")) {
+            else if (lookahead().value.equals("[")) {
                 match("[");
                 Expr indexExpr = parseExpr();
                 match("]");

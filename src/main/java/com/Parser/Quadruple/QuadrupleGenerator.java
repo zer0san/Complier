@@ -8,6 +8,63 @@ public class QuadrupleGenerator {
     private int tempId = 0;
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
     List<Quadruple> quds = new ArrayList<>();
+    // 函数签名类
+    private static class FunctionSignature {
+        String returnType;
+        List<String> paramTypes;
+        List<String> paramNames;
+
+        public FunctionSignature(String returnType, List<String> paramTypes, List<String> paramNames) {
+            this.returnType = returnType;
+            this.paramTypes = paramTypes;
+            this.paramNames = paramNames;
+        }
+    }
+    // 函数表
+    private final Map<String, FunctionSignature> functionTable = new HashMap<>();
+
+    // 添加表达式类型检查方法
+    private String getExprType(Expr expr) {
+        if (expr instanceof NumberExpr) {
+            return "int";
+        } else if (expr instanceof CharExpr) {
+            return "char";
+        } else if (expr instanceof StringExpr) {
+            return "string";
+        } else if (expr instanceof VarExpr) {
+            // 这里简化处理，假设所有变量都是int类型
+            // 更完整的实现应该维护一个变量类型表
+            return "int";
+        } else if (expr instanceof FunctionCallExpr) {
+            FunctionCallExpr funcCall = (FunctionCallExpr) expr;
+            if (functionTable.containsKey(funcCall.funcName)) {
+                return functionTable.get(funcCall.funcName).returnType;
+            }
+            throw new RuntimeException("未定义的函数: " + funcCall.funcName);
+        } else if (expr instanceof ArrayAccessExpr) {
+            // 简化处理，假设所有数组元素都是int类型
+            return "int";
+        } else if (expr instanceof BinaryExpr) {
+            // 二元表达式结果默认为int类型
+            return "int";
+        }
+        return "unknown";
+    }
+
+
+    // 检查类型是否兼容
+    private boolean isTypeCompatible(String expectedType, String actualType) {
+        if (expectedType.equals(actualType)) {
+            return true;
+        }
+
+        // 允许的类型转换规则
+        if (expectedType.equals("int") && actualType.equals("char")) {
+            return true; // char可以转换为int
+        }
+
+        return false; // 其他类型组合不兼容
+    }
 
     // 判断条件
     public void ifFalse(Condition cond, String label) {
@@ -82,6 +139,66 @@ public class QuadrupleGenerator {
         return s.matches("-?\\d+");
     }
 
+    // 处理函数调用
+    public String generateFunctionCall(FunctionCallExpr call) {
+        // 检查函数是否已定义
+        if (!functionTable.containsKey(call.funcName)) {
+            throw new RuntimeException("未定义的函数: " + call.funcName);
+        }
+
+        // 获取函数签名
+        FunctionSignature signature = functionTable.get(call.funcName);
+
+        // 检查参数数量
+        if (call.arguments.size() != signature.paramTypes.size()) {
+            throw new RuntimeException("函数 '" + call.funcName +
+                    "' 需要 " + signature.paramTypes.size() +
+                    " 个参数，但提供了 " + call.arguments.size() + " 个");
+        }
+        // 类型检查
+        for (int i = 0; i < call.arguments.size(); i++) {
+            String expectedType = signature.paramTypes.get(i);
+            String actualType = getExprType(call.arguments.get(i));
+
+            if (!isTypeCompatible(expectedType, actualType)) {
+                throw new RuntimeException("函数 '" + call.funcName +
+                        "' 的第 " + (i+1) + " 个参数类型不匹配: 期望 " +
+                        expectedType + "，实际为 " + actualType);
+            }
+        }
+        List<String> evaluatedArgs = new ArrayList<>();
+
+        // 先计算所有参数
+        for (Expr arg : call.arguments) {
+            String argValue = generateExpr(arg);
+            evaluatedArgs.add(argValue);
+        }
+
+        // 生成参数传递的四元式
+        for (String arg : evaluatedArgs) {
+            quds.add(new Quadruple("param", arg, "_", "_"));
+        }
+
+        // 生成函数调用四元式
+        String temp = newTemp();
+        quds.add(new Quadruple("call", call.funcName, String.valueOf(evaluatedArgs.size()), temp));
+
+        return temp;
+    }
+    // 添加函数参数声明
+    public void declareParameter(String paramName) {
+        quds.add(new Quadruple("param_decl", "_", "_", paramName));
+    }
+
+    // 添加函数返回语句
+    public void returnStmt(Expr returnExpr) {
+        if (returnExpr != null) {
+            String value = generateExpr(returnExpr);
+            quds.add(new Quadruple("return", value, "_", "_"));
+        } else {
+            quds.add(new Quadruple("return", "_", "_", "_"));
+        }
+    }
     // 创建临时变量
     String newTemp() {
         return "t" + (tempId++);
@@ -94,6 +211,8 @@ public class QuadrupleGenerator {
             return "'" + Character.toString(c.value) + "'";
         } else if (expr instanceof VarExpr v) {
             return v.name;
+        } else if (expr instanceof FunctionCallExpr f) {
+            return generateFunctionCall(f);
         } else if (expr instanceof ArrayAccessExpr a) {
             return arrayAccess(a.arrayName, a.index);
         } else if (expr instanceof BinaryExpr b) {
@@ -126,12 +245,15 @@ public class QuadrupleGenerator {
         if (expr instanceof NumberExpr) {
             quds.add(new Quadruple("=", ((NumberExpr) expr).value + "", "_", var));
         } else if (expr instanceof CharExpr) {
-            // 处理字符字面量
             quds.add(new Quadruple("=", "'" + ((CharExpr) expr).value + "'", "_", var));
         } else if (expr instanceof StringExpr) {
             quds.add(new Quadruple("=", "\"" + ((StringExpr) expr).value + "\"", "_", var));
         } else if (expr instanceof VarExpr) {
             quds.add(new Quadruple("=", ((VarExpr) expr).name, "_", var));
+        } else if (expr instanceof FunctionCallExpr) {
+            // 处理函数调用表达式
+            String result = generateFunctionCall((FunctionCallExpr) expr);
+            quds.add(new Quadruple("=", result, "_", var));
         } else if (expr instanceof BinaryExpr) {
             String result = generateExpr((BinaryExpr) expr);
             quds.add(new Quadruple("=", result, "_", var));
@@ -147,5 +269,37 @@ public class QuadrupleGenerator {
 
     public List<Quadruple> getQuadruples() {
         return quds;
+    }
+
+    public void emitFuncParam(String returnType, String funcName, List<String> argList) {
+        // 解析RecursiveParser中参数名称列表，获取类型信息
+        List<String> paramTypes = new ArrayList<>();
+        // 获取参数类型信息 (从第一个参数的声明中提取)
+        for (int i = 0; i < argList.size(); i++) {
+            String paramName = argList.get(i);
+            // 查找参数类型的四元式
+            for (int j = quds.size() - 1; j >= 0; j--) {
+                Quadruple q = quds.get(j);
+                if ("param_decl".equals(q.op) && paramName.equals(q.result)) {
+                    paramTypes.add(q.arg1.equals("_") ? "int" : q.arg1); // 如果类型未指定，默认为int
+                    break;
+                }
+            }
+            // 如果找不到类型信息，默认使用int
+            if (paramTypes.size() <= i) {
+                paramTypes.add("int");
+            }
+        }
+
+        // 存储函数签名
+        functionTable.put(funcName, new FunctionSignature(returnType, paramTypes, argList));
+
+        // 生成四元式，同时添加类型信息
+        quds.add(new Quadruple("FuncDef", returnType, String.valueOf(argList.size()), funcName));
+        for (int i = 0; i < argList.size(); i++) {
+            String paramName = argList.get(i);
+            String paramType = paramTypes.get(i);
+            quds.add(new Quadruple("param_decl", paramType, "_", paramName));
+        }
     }
 }
