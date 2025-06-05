@@ -18,6 +18,21 @@ public class Lexer {
             '(', ')', '{', '}', ';', ',', '[', ']'));
     @Getter
     Map<Token, Integer> bugFinderMp = new HashMap<>();
+    // 添加Getter方法以访问符号表
+    @Getter
+    private Map<String, Integer> keywordTable = new HashMap<>();
+
+    @Getter
+    private Map<String, Integer> identifierTable = new HashMap<>();
+
+    @Getter
+    private Map<String, Integer> constantTable = new HashMap<>();
+
+    @Getter
+    private Map<String, Integer> operatorTable = new HashMap<>();
+
+    @Getter
+    private Map<String, Integer> separatorTable = new HashMap<>();
 
     private final String input;
     private int pos;
@@ -95,6 +110,113 @@ public class Lexer {
         } else {
             throw new RuntimeException("Empty character literal");
         }
+    }
+
+    public String getStandardTokenSequence() {
+
+        // 清空旧数据
+        keywordTable.clear();
+        identifierTable.clear();
+        constantTable.clear();
+        operatorTable.clear();
+        separatorTable.clear();
+
+        // 创建符号表
+        Map<String, Integer> keywordTable = new HashMap<>();
+        Map<String, Integer> identifierTable = new HashMap<>();
+        Map<String, Integer> constantTable = new HashMap<>();
+        Map<String, Integer> operatorTable = new HashMap<>();
+        Map<String, Integer> separatorTable = new HashMap<>();
+
+        // 初始化计数器和映射
+        Map<String, Integer> typeCounter = new HashMap<>();
+        Map<String, Map<String, String>> valueMap = new HashMap<>();
+        StringBuilder result = new StringBuilder();
+
+        // 构建符号表和token序列
+        for (int i = 0; i < tokens.size(); i++) {
+            Token token = tokens.get(i);
+            String typeCode = getTypeCode(token.type);
+
+            // 初始化该类型的计数器和映射
+            typeCounter.putIfAbsent(typeCode, 0);
+            valueMap.putIfAbsent(typeCode, new HashMap<>());
+
+            // 将token添加到对应的符号表
+            switch (token.type) {
+                case KEYWORD:
+                    keywordTable.putIfAbsent(token.value, keywordTable.size() + 1);
+                    break;
+                case IDENTIFIER:
+                    identifierTable.putIfAbsent(token.value, identifierTable.size() + 1);
+                    break;
+                case NUMBER:
+                case CHAR_LITERAL:
+                case STRING_LITERAL:
+                    constantTable.putIfAbsent(token.value, constantTable.size() + 1);
+                    break;
+                case OPERATOR:
+                    operatorTable.putIfAbsent(token.value, operatorTable.size() + 1);
+                    break;
+                case SEPARATOR:
+                    separatorTable.putIfAbsent(token.value, separatorTable.size() + 1);
+                    break;
+            }
+
+            // 生成token序列
+            String valueCode;
+            if (valueMap.get(typeCode).containsKey(token.value)) {
+                valueCode = valueMap.get(typeCode).get(token.value);
+            } else {
+                int count = typeCounter.get(typeCode) + 1;
+                typeCounter.put(typeCode, count);
+                valueCode = typeCode + count;
+                valueMap.get(typeCode).put(token.value, valueCode);
+            }
+
+            if (i > 0) result.append(",");
+            result.append("(").append(typeCode).append(",").append(valueCode).append(")");
+        }
+
+        // 打印符号表
+        System.out.println("关键字表(k):");
+        printTable(keywordTable);
+
+        System.out.println("\n标识符表(i):");
+        printTable(identifierTable);
+
+        System.out.println("\n常数表(c):");
+        printTable(constantTable);
+
+        System.out.println("\n运算符表(op):");
+        printTable(operatorTable);
+
+        System.out.println("\n分隔符表(p):");
+        printTable(separatorTable);
+
+        System.out.println("\nToken序列:");
+        System.out.println(result);
+
+        return result.toString();
+    }
+
+    private void printTable(Map<String, Integer> table) {
+        table.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .forEach(entry -> System.out.println(entry.getValue() + ": " + entry.getKey()));
+    }
+
+    private String getTypeCode(Token.Type type) {
+        return switch (type) {
+            case IDENTIFIER -> "I";
+            case KEYWORD -> "K";
+            case NUMBER -> "C";
+            case CHAR_LITERAL -> "C";
+            case STRING_LITERAL -> "C";
+            case OPERATOR -> "P";
+            case SEPARATOR -> "P";
+            default -> "x"; // 其他类型
+        };
     }
 
     private void readStringLiteral() {

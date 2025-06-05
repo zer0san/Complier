@@ -44,7 +44,8 @@ $(document).ready(function () {
                 } else {
                     var strings = result.res.toString().split("\n");
                     $("#opt_area").css("color", "green");
-                    $("#opt_area").text(strings.join("\n"));
+                    $("#opt_area").text(strings.join("\n")+result.tokens);
+
                 }
             },
             error: function (xhr, status, error) {
