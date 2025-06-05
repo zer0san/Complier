@@ -50,6 +50,7 @@ public class Main {
                 return Result.fail("syntax error" + e.getMessage()+"\n" + errorMessage);
             }
             List<Quadruple> qds = parser.show();
+            // 目标代码生成
             AssemblyGenerator asmGen = new AssemblyGenerator();
             asmGen.generateAssembly(qds);
             asmGen.show();
