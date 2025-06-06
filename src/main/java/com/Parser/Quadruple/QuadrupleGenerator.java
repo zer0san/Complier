@@ -22,8 +22,12 @@ public class QuadrupleGenerator {
     }
     // 函数表
     private final Map<String, FunctionSignature> functionTable = new HashMap<>();
-
-    // 添加表达式类型检查方法
+    private String currentFunction = null;
+    // 在QuadrupleGenerator类中添加此方法
+    public void declareVariable(String type, String varName) {
+        quds.add(new Quadruple("var_decl", type, "_", varName));
+    }
+    // 当前正在处理的函数名
     private String getExprType(Expr expr) {
         if (expr instanceof NumberExpr) {
             return "int";
@@ -32,9 +36,22 @@ public class QuadrupleGenerator {
         } else if (expr instanceof StringExpr) {
             return "string";
         } else if (expr instanceof VarExpr) {
-            // 这里简化处理，假设所有变量都是int类型
-            // 更完整的实现应该维护一个变量类型表
-            return "int";
+            VarExpr varExpr = (VarExpr) expr;
+            // 查找变量声明获取类型 - 需要查找所有类型的声明
+            for (int j = quds.size() - 1; j >= 0; j--) {
+                Quadruple q = quds.get(j);
+                // 查找参数声明
+                if ("param_decl".equals(q.op) && varExpr.name.equals(q.result)) {
+                    return q.arg1.equals("_") ? "int" : q.arg1;
+                }
+                // 查找局部变量声明 - 添加一个新的四元式类型
+                if ("var_decl".equals(q.op) && varExpr.name.equals(q.result)) {
+                    return q.arg1.equals("_") ? "int" : q.arg1;
+                }
+            }
+            // 不再默认返回int，而是抛出异常
+            throw new RuntimeException("未声明的变量: " + varExpr.name);
+
         } else if (expr instanceof FunctionCallExpr) {
             FunctionCallExpr funcCall = (FunctionCallExpr) expr;
             if (functionTable.containsKey(funcCall.funcName)) {
@@ -42,11 +59,25 @@ public class QuadrupleGenerator {
             }
             throw new RuntimeException("未定义的函数: " + funcCall.funcName);
         } else if (expr instanceof ArrayAccessExpr) {
-            // 简化处理，假设所有数组元素都是int类型
-            return "int";
+            ArrayAccessExpr arrayExpr = (ArrayAccessExpr)expr;
+            // 查找数组声明，获取数组元素类型
+            for (int j = quds.size() - 1; j >= 0; j--) {
+                Quadruple q = quds.get(j);
+                if ("var_decl".equals(q.op) && arrayExpr.arrayName.equals(q.result)) {
+                    return q.arg1; // 返回数组声明的类型
+                }
+            }
+            throw new RuntimeException("未声明的数组: " + arrayExpr.arrayName);
         } else if (expr instanceof BinaryExpr) {
-            // 二元表达式结果默认为int类型
-            return "int";
+            BinaryExpr binExpr = (BinaryExpr)expr;
+            String leftType = getExprType(binExpr.left);
+            String rightType = getExprType(binExpr.right);
+
+            // 类型一致时才能进行二元运算
+            if (!leftType.equals(rightType)) {
+                throw new RuntimeException("二元表达式两侧类型不匹配: " + leftType + " 和 " + rightType);
+            }
+            return leftType; // 返回表达式类型
         }
         return "unknown";
     }
@@ -112,6 +143,8 @@ public class QuadrupleGenerator {
 
     // 函数结束标签
     public void emitFuncEnd(String label) {
+        // 清除当前函数上下文
+        currentFunction = null;
         quds.add(new Quadruple("FuncEnd", "_", "_", label));
     }
 
@@ -191,12 +224,40 @@ public class QuadrupleGenerator {
     }
 
     // 添加函数返回语句
+    // 添加函数返回语句（带类型检查）
     public void returnStmt(Expr returnExpr) {
-        if (returnExpr != null) {
-            String value = generateExpr(returnExpr);
-            quds.add(new Quadruple("return", value, "_", "_"));
+        // 检查当前是否在函数内
+        if (currentFunction != null && functionTable.containsKey(currentFunction)) {
+            String declaredReturnType = functionTable.get(currentFunction).returnType;
+
+            if (returnExpr != null) {
+                String value = generateExpr(returnExpr);
+                String exprType = getExprType(returnExpr);
+
+                // 类型检查
+                if (!isTypeCompatible(declaredReturnType, exprType)) {
+                    throw new RuntimeException("函数 '" + currentFunction +
+                            "' 返回类型不匹配: 期望 " + declaredReturnType +
+                            "，实际为 " + exprType);
+                }
+
+                quds.add(new Quadruple("return", value, "_", "_"));
+            } else {
+                // 无返回值，检查函数是否声明为void
+                if (!"void".equals(declaredReturnType)) {
+                    throw new RuntimeException("函数 '" + currentFunction +
+                            "' 需要返回 " + declaredReturnType + " 类型的值");
+                }
+                quds.add(new Quadruple("return", "_", "_", "_"));
+            }
         } else {
-            quds.add(new Quadruple("return", "_", "_", "_"));
+            // 不在函数内或函数未声明
+            if (returnExpr != null) {
+                String value = generateExpr(returnExpr);
+                quds.add(new Quadruple("return", value, "_", "_"));
+            } else {
+                quds.add(new Quadruple("return", "_", "_", "_"));
+            }
         }
     }
     // 创建临时变量
@@ -240,8 +301,36 @@ public class QuadrupleGenerator {
         }
         return null;
     }
+    // 添加获取变量类型的辅助方法
+    private String getVarType(String varName) {
+        // 查找变量声明获取类型
+        for (int j = quds.size() - 1; j >= 0; j--) {
+            Quadruple q = quds.get(j);
+            // 查找参数声明
+            if ("param_decl".equals(q.op) && varName.equals(q.result)) {
+                return q.arg1.equals("_") ? "int" : q.arg1;
+            }
+            // 查找局部变量声明
+            if ("var_decl".equals(q.op) && varName.equals(q.result)) {
+                return q.arg1.equals("_") ? "int" : q.arg1;
+            }
+        }
+        // 不再默认返回int，而是抛出异常
+        throw new RuntimeException("未声明的变量: " + varName);
+    }
 
     public void assign(String var, Expr expr) {
+        // 获取左侧变量类型
+        String varType = getVarType(var);
+        // 获取右侧表达式类型
+        String exprType = getExprType(expr);
+
+        // 类型检查
+        if (!isTypeCompatible(varType, exprType)) {
+            throw new RuntimeException("变量 '" + var + "' 赋值类型不匹配: 变量类型 " +
+                    varType + "，表达式类型 " + exprType);
+        }
+
         if (expr instanceof NumberExpr) {
             quds.add(new Quadruple("=", ((NumberExpr) expr).value + "", "_", var));
         } else if (expr instanceof CharExpr) {
@@ -270,8 +359,11 @@ public class QuadrupleGenerator {
     public List<Quadruple> getQuadruples() {
         return quds;
     }
-
+    // 新增方法，接收参数类型
     public void emitFuncParam(String returnType, String funcName, List<String> argList) {
+
+        // 设置当前函数上下文
+        currentFunction = funcName;
         // 解析RecursiveParser中参数名称列表，获取类型信息
         List<String> paramTypes = new ArrayList<>();
         // 获取参数类型信息 (从第一个参数的声明中提取)
@@ -285,9 +377,9 @@ public class QuadrupleGenerator {
                     break;
                 }
             }
-            // 如果找不到类型信息，默认使用int
+            // 如果找不到类型信息，抛出异常
             if (paramTypes.size() <= i) {
-                paramTypes.add("int");
+                throw new RuntimeException("无法确定函数 '" + funcName + "' 参数 '" + paramName + "' 的类型");
             }
         }
 

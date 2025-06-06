@@ -281,7 +281,8 @@ public class RecursiveParser {
 //        match("int");
         String type = match(lookahead().value).value; // 获取int或char
         String varName = match(Token.Type.IDENTIFIER).value;
-
+        // 使用QuadrupleGenerator的方法记录变量类型信息
+        gen.declareVariable(type, varName);
         // Check if it's an array declaration: int a[10];
         if (lookahead().value.equals("[")) {
             match("[");

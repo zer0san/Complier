@@ -33,6 +33,7 @@ $(document).ready(function () {
             data: JSON.stringify({sourceCode: $('#ipt_area').val()}),
             contentType: "application/json",
             processData: false,
+
             success: function (result) {
                 console.log(result);
                 const success = result.success;
