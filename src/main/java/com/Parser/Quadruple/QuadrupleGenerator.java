@@ -4,36 +4,69 @@ import java.util.*;
 
 import static java.lang.String.format;
 
+/**
+ * 四元式中间代码生成器
+ * 负责将语法分析过程中的表达式和语句转换为四元式形式的中间代码
+ * 四元式格式：(操作符, 操作数1, 操作数2, 结果)
+ */
 public class QuadrupleGenerator {
+    // 临时变量计数器，用于生成唯一的临时变量名(t0, t1, t2...)
     private int tempId = 0;
+    // 用于公共子表达式消除的缓存，键为"操作符,操作数1,操作数2"，值为对应的临时变量
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
+    // 存储生成的四元式列表
     List<Quadruple> quds = new ArrayList<>();
-    // 函数签名类
+    
+    /**
+     * 函数签名内部类，用于存储函数的返回类型、参数类型和参数名称
+     */
     private static class FunctionSignature {
-        String returnType;
-        List<String> paramTypes;
-        List<String> paramNames;
+        String returnType;              // 函数返回类型
+        List<String> paramTypes;        // 函数参数类型列表
+        List<String> paramNames;        // 函数参数名称列表
 
+        /**
+         * 构造函数签名对象
+         * @param returnType 返回类型
+         * @param paramTypes 参数类型列表
+         * @param paramNames 参数名称列表
+         */
         public FunctionSignature(String returnType, List<String> paramTypes, List<String> paramNames) {
             this.returnType = returnType;
             this.paramTypes = paramTypes;
             this.paramNames = paramNames;
         }
     }
-    // 函数表
+    
+    // 函数表，存储所有函数的签名信息，键为函数名
     private final Map<String, FunctionSignature> functionTable = new HashMap<>();
+    // 当前正在处理的函数名，用于上下文相关的操作如返回语句检查
     private String currentFunction = null;
-    // 在QuadrupleGenerator类中添加此方法
+    
+    /**
+     * 生成变量声明的四元式
+     * @param type 变量类型(int/char/string)
+     * @param varName 变量名
+     */
     public void declareVariable(String type, String varName) {
         quds.add(new Quadruple("var_decl", type, "_", varName));
     }
-    // 当前正在处理的函数名
+    
+    /**
+     * 获取表达式的类型
+     * @param expr 要检查类型的表达式
+     * @return 表达式的类型(int/char/string)
+     * @throws RuntimeException 当表达式引用未声明的变量或函数时
+     */
     private String getExprType(Expr expr) {
         if (expr instanceof NumberExpr) {
+            // 数字字面量的类型是int
             return "int";
         } else if (expr instanceof CharExpr) {
+            // 字符字面量的类型是char
             return "char";
         } else if (expr instanceof StringExpr) {
+            // 字符串字面量的类型是string
             return "string";
         } else if (expr instanceof VarExpr) {
             VarExpr varExpr = (VarExpr) expr;
@@ -53,12 +86,14 @@ public class QuadrupleGenerator {
             throw new RuntimeException("未声明的变量: " + varExpr.name);
 
         } else if (expr instanceof FunctionCallExpr) {
+            // 函数调用表达式的类型是函数的返回类型
             FunctionCallExpr funcCall = (FunctionCallExpr) expr;
             if (functionTable.containsKey(funcCall.funcName)) {
                 return functionTable.get(funcCall.funcName).returnType;
             }
             throw new RuntimeException("未定义的函数: " + funcCall.funcName);
         } else if (expr instanceof ArrayAccessExpr) {
+            // 数组访问表达式的类型是数组元素的类型
             ArrayAccessExpr arrayExpr = (ArrayAccessExpr)expr;
             // 查找数组声明，获取数组元素类型
             for (int j = quds.size() - 1; j >= 0; j--) {
@@ -69,6 +104,7 @@ public class QuadrupleGenerator {
             }
             throw new RuntimeException("未声明的数组: " + arrayExpr.arrayName);
         } else if (expr instanceof BinaryExpr) {
+            // 二元表达式的类型由操作数决定
             BinaryExpr binExpr = (BinaryExpr)expr;
             String leftType = getExprType(binExpr.left);
             String rightType = getExprType(binExpr.right);
@@ -82,8 +118,12 @@ public class QuadrupleGenerator {
         return "unknown";
     }
 
-
-    // 检查类型是否兼容
+    /**
+     * 检查两个类型是否兼容(可以相互赋值)
+     * @param expectedType 期望的类型
+     * @param actualType 实际的类型
+     * @return 如果类型兼容则返回true，否则返回false
+     */
     private boolean isTypeCompatible(String expectedType, String actualType) {
         if (expectedType.equals(actualType)) {
             return true;
@@ -97,7 +137,11 @@ public class QuadrupleGenerator {
         return false; // 其他类型组合不兼容
     }
 
-    // 判断条件
+    /**
+     * 生成条件判断的四元式，如果条件为false则跳转到指定标签
+     * @param cond 条件表达式
+     * @param label 跳转目标标签
+     */
     public void ifFalse(Condition cond, String label) {
         String left = generateExpr(cond.left);
         String right = generateExpr(cond.right);
@@ -106,54 +150,83 @@ public class QuadrupleGenerator {
         quds.add(new Quadruple("if", temp, "_", label));
     }
 
-    // 跳转标签
+    /**
+     * 生成无条件跳转到指定标签的四元式
+     * @param label 跳转目标标签
+     */
     public void gotoLabel(String label) {
         quds.add(new Quadruple("goto", "_", "_", label));
     }
 
-    // 生成标签
+    /**
+     * 生成标签定义的四元式
+     * @param label 标签名
+     */
     public void emitLabel(String label) {
         quds.add(new Quadruple("label", "_", "_", label));
     }
 
-    // el 标签
+    /**
+     * 生成else开始标记的四元式
+     */
     public void emitElLabel() {
         quds.add(new Quadruple("el", "_", "_", "_"));
     }
 
-    // ie 标签
+    /**
+     * 生成if-else结束标记的四元式
+     */
     public void emitIeLabel() {
         quds.add(new Quadruple("ie", "_", "_", "_"));
     }
 
-    // we 标签
+    /**
+     * 生成while循环结束标记的四元式
+     */
     public void emitWeLabel() {
         quds.add(new Quadruple("we", "_", "_", "_"));
     }
 
-    // wh 标签
+    /**
+     * 生成while循环开始标记的四元式
+     */
     public void emitWhLabel() {
         quds.add(new Quadruple("wh", "_", "_", "_"));
     }
 
-    // 函数开始标签
+    /**
+     * 生成函数开始标记的四元式
+     * @param label 函数名
+     */
     public void emitFuncLabel(String label) {
         quds.add(new Quadruple("FuncStart", "_", "_", label));
     }
 
-    // 函数结束标签
+    /**
+     * 生成函数结束标记的四元式
+     * @param label 函数名
+     */
     public void emitFuncEnd(String label) {
         // 清除当前函数上下文
         currentFunction = null;
         quds.add(new Quadruple("FuncEnd", "_", "_", label));
     }
 
-    // 数组声明
+    /**
+     * 生成数组声明的四元式
+     * @param arrayName 数组名
+     * @param size 数组大小
+     */
     public void declareArray(String arrayName, int size) {
         quds.add(new Quadruple("ARRAY_DECL", arrayName, Integer.toString(size), "_"));
     }
 
-    // 数组访问
+    /**
+     * 生成数组访问的四元式
+     * @param arrayName 数组名
+     * @param indexExpr 索引表达式
+     * @return 存储数组元素值的临时变量
+     */
     public String arrayAccess(String arrayName, Expr indexExpr) {
         String indexValue = generateExpr(indexExpr);
         String temp = newTemp();
@@ -161,18 +234,33 @@ public class QuadrupleGenerator {
         return temp;
     }
 
-    // 数组赋值
+    /**
+     * 生成数组赋值的四元式
+     * @param arrayName 数组名
+     * @param indexExpr 索引表达式
+     * @param valueExpr 值表达式
+     */
     public void assignArray(String arrayName, Expr indexExpr, Expr valueExpr) {
         String indexValue = generateExpr(indexExpr);
         String value = generateExpr(valueExpr);
         quds.add(new Quadruple("=", value, "_", arrayName + "[" + indexValue + "]"));
     }
 
+    /**
+     * 判断字符串是否为数字
+     * @param s 要检查的字符串
+     * @return 如果是数字则返回true
+     */
     boolean isNumber(String s) {
         return s.matches("-?\\d+");
     }
 
-    // 处理函数调用
+    /**
+     * 生成函数调用的四元式
+     * @param call 函数调用表达式
+     * @return 存储函数返回值的临时变量
+     * @throws RuntimeException 当函数未定义或参数不匹配时
+     */
     public String generateFunctionCall(FunctionCallExpr call) {
         // 检查函数是否已定义
         if (!functionTable.containsKey(call.funcName)) {
@@ -218,13 +306,20 @@ public class QuadrupleGenerator {
 
         return temp;
     }
-    // 添加函数参数声明
+    
+    /**
+     * 生成参数声明的四元式
+     * @param paramName 参数名
+     */
     public void declareParameter(String paramName) {
         quds.add(new Quadruple("param_decl", "_", "_", paramName));
     }
 
-    // 添加函数返回语句
-    // 添加函数返回语句（带类型检查）
+    /**
+     * 生成返回语句的四元式(带类型检查)
+     * @param returnExpr 返回表达式，可以为null表示无返回值
+     * @throws RuntimeException 当返回类型与函数声明不匹配时
+     */
     public void returnStmt(Expr returnExpr) {
         // 检查当前是否在函数内
         if (currentFunction != null && functionTable.containsKey(currentFunction)) {
@@ -260,29 +355,48 @@ public class QuadrupleGenerator {
             }
         }
     }
-    // 创建临时变量
+    
+    /**
+     * 创建新的临时变量名
+     * @return 格式为"t数字"的临时变量名
+     */
     String newTemp() {
         return "t" + (tempId++);
     }
 
+    /**
+     * 递归生成表达式的四元式，并返回表达式的结果(变量名或常量值)
+     * @param expr 要生成四元式的表达式
+     * @return 表达式的结果(临时变量名、常量值或变量名)
+     */
     String generateExpr(Expr expr) {
         if (expr instanceof NumberExpr n) {
+            // 数字字面量直接返回其值
             return Integer.toString(n.value);
         } else if (expr instanceof CharExpr c) {
+            // 字符字面量返回带引号的字符
             return "'" + Character.toString(c.value) + "'";
         } else if (expr instanceof VarExpr v) {
+            // 变量表达式直接返回变量名
             return v.name;
         } else if (expr instanceof FunctionCallExpr f) {
+            // 函数调用表达式生成函数调用的四元式
             return generateFunctionCall(f);
         } else if (expr instanceof ArrayAccessExpr a) {
+            // 数组访问表达式生成数组访问的四元式
             return arrayAccess(a.arrayName, a.index);
         } else if (expr instanceof BinaryExpr b) {
+            // 二元表达式递归处理左右两边的表达式
             String arg1 = generateExpr(b.left);
             String arg2 = generateExpr(b.right);
             String key = b.op + "," + arg1 + "," + arg2;
+            
+            // 公共子表达式消除：检查是否已计算过相同的表达式
             if (cseCache.containsKey(key)) {
                 return cseCache.get(key);
             }
+            
+            // 常量折叠：如果两个操作数都是常量，直接计算结果
             if (isNumber(arg1) && isNumber(arg2)) {
                 // 常量折叠
                 int folded = switch (b.op) {
@@ -294,14 +408,23 @@ public class QuadrupleGenerator {
                 };
                 return Integer.toString(folded);
             }
+            
+            // 生成二元运算的四元式
             String result = newTemp();
             quds.add(new Quadruple(b.op, arg1, arg2, result));
+            // 缓存结果用于公共子表达式消除
             cseCache.put(key, result);
             return result;
         }
         return null;
     }
-    // 添加获取变量类型的辅助方法
+    
+    /**
+     * 获取变量的类型
+     * @param varName 变量名
+     * @return 变量的类型
+     * @throws RuntimeException 当变量未声明时
+     */
     private String getVarType(String varName) {
         // 查找变量声明获取类型
         for (int j = quds.size() - 1; j >= 0; j--) {
@@ -319,6 +442,12 @@ public class QuadrupleGenerator {
         throw new RuntimeException("未声明的变量: " + varName);
     }
 
+    /**
+     * 生成变量赋值的四元式(带类型检查)
+     * @param var 变量名
+     * @param expr 赋值表达式
+     * @throws RuntimeException 当赋值类型不匹配时
+     */
     public void assign(String var, Expr expr) {
         // 获取左侧变量类型
         String varType = getVarType(var);
@@ -332,23 +461,32 @@ public class QuadrupleGenerator {
         }
 
         if (expr instanceof NumberExpr) {
+            // 数字字面量赋值
             quds.add(new Quadruple("=", ((NumberExpr) expr).value + "", "_", var));
         } else if (expr instanceof CharExpr) {
+            // 字符字面量赋值
             quds.add(new Quadruple("=", "'" + ((CharExpr) expr).value + "'", "_", var));
         } else if (expr instanceof StringExpr) {
+            // 字符串字面量赋值
             quds.add(new Quadruple("=", "\"" + ((StringExpr) expr).value + "\"", "_", var));
         } else if (expr instanceof VarExpr) {
+            // 变量赋值
             quds.add(new Quadruple("=", ((VarExpr) expr).name, "_", var));
         } else if (expr instanceof FunctionCallExpr) {
-            // 处理函数调用表达式
+            // 函数调用结果赋值
             String result = generateFunctionCall((FunctionCallExpr) expr);
             quds.add(new Quadruple("=", result, "_", var));
         } else if (expr instanceof BinaryExpr) {
+            // 二元表达式结果赋值
             String result = generateExpr((BinaryExpr) expr);
             quds.add(new Quadruple("=", result, "_", var));
         }
     }
 
+    /**
+     * 显示并返回所有生成的四元式
+     * @return 四元式列表
+     */
     public List<Quadruple> show() {
         for (var q : quds) {
             System.out.println(q);
@@ -356,12 +494,22 @@ public class QuadrupleGenerator {
         return quds;
     }
 
+    /**
+     * 获取所有生成的四元式
+     * @return 四元式列表
+     */
     public List<Quadruple> getQuadruples() {
         return quds;
     }
-    // 新增方法，接收参数类型
+    
+    /**
+     * 生成函数声明和参数的四元式
+     * @param returnType 函数返回类型
+     * @param funcName 函数名
+     * @param argList 参数名称列表
+     * @throws RuntimeException 当无法确定参数类型时
+     */
     public void emitFuncParam(String returnType, String funcName, List<String> argList) {
-
         // 设置当前函数上下文
         currentFunction = funcName;
         // 解析RecursiveParser中参数名称列表，获取类型信息
