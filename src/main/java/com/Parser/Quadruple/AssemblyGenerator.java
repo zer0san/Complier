@@ -34,6 +34,11 @@ public class AssemblyGenerator {
             }
         }
 
+        // 检查是否存在main函数
+        if(!functionNames.contains("main")){
+            throw new RuntimeException("Error: required main function");
+        }
+
         // 收集变量声明
         for (Quadruple q : quadruples) {
             collectVariable(q.arg1);
