@@ -16,9 +16,14 @@ public class QuadrupleGenerator {
     private final Map<String, String> cseCache = new HashMap<>(); // 公共子表达式消除
     // 存储生成的四元式列表
     List<Quadruple> quds = new ArrayList<>();
-    
+    // 存储已声明的变量名，用于避免重复声明
+    private final Set<String> declaredVariables = new HashSet<>();
+    // 存储函数是否有返回值的映射，键为函数名，值为是否有返回值
+    private final Map<String, Boolean> functionHasReturn = new HashMap<>();
+
     /**
      * 函数签名内部类，用于存储函数的返回类型、参数类型和参数名称
+     * 用于函数声明和调用时的类型检查
      */
     private static class FunctionSignature {
         String returnType;              // 函数返回类型
@@ -42,13 +47,26 @@ public class QuadrupleGenerator {
     private final Map<String, FunctionSignature> functionTable = new HashMap<>();
     // 当前正在处理的函数名，用于上下文相关的操作如返回语句检查
     private String currentFunction = null;
-    
+
     /**
      * 生成变量声明的四元式
      * @param type 变量类型(int/char/string)
      * @param varName 变量名
+     * @throws RuntimeException 当变量重复声明时
      */
     public void declareVariable(String type, String varName) {
+        // 检查变量是否已经声明
+        if (declaredVariables.contains(varName)) {
+            throw new RuntimeException("变量 '" + varName + "' 重复声明");
+        }
+        // 检查变量名是否与函数名冲突
+        if (functionTable.containsKey(varName)) {
+            throw new RuntimeException("变量名 '" + varName + "' 与已声明函数冲突");
+        }
+        // 添加到已声明变量集合
+        declaredVariables.add(varName);
+
+        // 生成变量声明四元式
         quds.add(new Quadruple("var_decl", type, "_", varName));
     }
     
@@ -207,6 +225,15 @@ public class QuadrupleGenerator {
      * @param label 函数名
      */
     public void emitFuncEnd(String label) {
+        // 检查非void函数是否有返回语句
+        if (functionTable.containsKey(label)) {
+            String returnType = functionTable.get(label).returnType;
+            if (!"void".equals(returnType) &&
+                    (!functionHasReturn.containsKey(label) || !functionHasReturn.get(label))) {
+                throw new RuntimeException("错误：函数 '" + label + "' 声明为 '" + returnType +
+                        "' 类型但没有返回语句");
+            }
+        }
         // 清除当前函数上下文
         currentFunction = null;
         quds.add(new Quadruple("FuncEnd", "_", "_", label));
@@ -353,6 +380,10 @@ public class QuadrupleGenerator {
             } else {
                 quds.add(new Quadruple("return", "_", "_", "_"));
             }
+        }
+        // 如果当前在函数内并且有返回值，标记该函数已有返回语句
+        if (currentFunction != null && returnExpr != null) {
+            functionHasReturn.put(currentFunction, true);
         }
     }
     
@@ -510,6 +541,27 @@ public class QuadrupleGenerator {
      * @throws RuntimeException 当无法确定参数类型时
      */
     public void emitFuncParam(String returnType, String funcName, List<String> argList) {
+        // 检查函数名是否与变量名冲突
+        if (declaredVariables.contains(funcName)) {
+            throw new RuntimeException("函数名 '" + funcName + "' 与已声明变量冲突");
+        }
+        // 检查函数是否已经声明
+        if (functionTable.containsKey(funcName)) {
+            throw new RuntimeException("函数 '" + funcName + "' 重复声明");
+        }
+
+        // 检查参数名重复
+        Set<String> paramNames = new HashSet<>();
+        for (String param : argList) {
+            if (!paramNames.add(param)) {
+                throw new RuntimeException("函数 '" + funcName + "' 中参数名 '" + param + "' 重复");
+            }
+        }
+        // 初始化返回状态跟踪
+        if (!"void".equals(returnType)) {
+            functionHasReturn.put(funcName, false);
+        }
+
         // 设置当前函数上下文
         currentFunction = funcName;
         // 解析RecursiveParser中参数名称列表，获取类型信息

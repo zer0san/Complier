@@ -138,7 +138,8 @@ public class RecursiveParser {
      */
     private boolean isFuncDeclStart() {
         String value = lookahead().value;
-        if(!value.equals("int") && !value.equals("char") && !value.equals("string")) return false;
+        // 使用isValidType()检查类型，包括void
+        if(!isValidType(value)) return false;
 
         // 尝试看下一个和下下个token是否符合函数声明模式
         if (pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
@@ -159,6 +160,10 @@ public class RecursiveParser {
         match("(");// 匹配左括号开始参数列表
         List<String[]> paramsWithTypes = parseParamList();// 解析参数列表，返回类型和名称的列表
         match(")");
+        // 检查函数体是否存在
+        if (!lookahead().value.equals("{")) {
+            throw new RuntimeException("函数 '" + funcName + "' 声明缺少函数体");
+        }
 
         // 提取参数名和类型到单独的列表
         List<String> paramNames = new ArrayList<>();
@@ -174,6 +179,13 @@ public class RecursiveParser {
         gen.emitFuncParam(returnType, funcName, paramNames);// 生成函数参数四元式
         parseBlock();// 解析函数体，包含语句列表
         gen.emitFuncEnd(funcName);// 生成函数结束四元式
+    }
+    /**
+     * 判断是否为有效类型关键字
+     */
+    private boolean isValidType(String value) {
+        return value.equals("int") || value.equals("char") ||
+                value.equals("string") || value.equals("void");
     }
 
     /**
@@ -191,21 +203,36 @@ public class RecursiveParser {
 
         // 解析一个或多个参数
         do {
-            String type = match(lookahead().value).value; // 获取参数类型
+            // 参数类型
+            String type;
+            if (isValidType(lookahead().value)) {
+                type = match(lookahead().value).value;
+            } else {
+                throw new RuntimeException("Expected type keyword (int/char/string), but found " + lookahead().value);
+            }
+
+            // 参数名
+            if (lookahead().type != Token.Type.IDENTIFIER) {
+                throw new RuntimeException("Expected parameter name, but found " + lookahead().value);
+            }
             String paramName = match(Token.Type.IDENTIFIER).value;
+
+            // 向参数列表添加参数
             paramsWithTypes.add(new String[]{type, paramName});
 
+            // 记录参数声明
+            gen.declareParameter(paramName);
+
             // 检查是否有更多参数
-            if(lookahead().value.equals(",")) {
+            if (lookahead().value.equals(",")) {
                 match(",");
             } else {
                 break;
             }
-        } while(true);
+        } while (true);
 
         return paramsWithTypes;
     }
-
     /**
      * 解析语句列表
      * 不断解析语句，直到遇到右大括号或文件结尾
