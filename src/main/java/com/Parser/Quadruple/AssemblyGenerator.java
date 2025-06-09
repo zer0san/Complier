@@ -10,7 +10,7 @@ public class AssemblyGenerator {
     private int tempCounter = 0;
     private String currentFunction = "MAIN";
     private final Set<String> functionNames = new HashSet<>();
-
+    private SymbolTable symbolTable = new SymbolTable();
     public AssemblyGenerator() {
         // 初始化模型和段
         assemblyCode.append(".MODEL SMALL\n");
@@ -20,6 +20,13 @@ public class AssemblyGenerator {
     }
 
     public void generateAssembly(List<Quadruple> quadruples) {
+        // 先构建符号表
+        symbolTable.buildFromQuadruples(quadruples);
+
+        // 输出符号表内容
+        System.out.println(symbolTable.printSymbolTable());
+
+
         // 收集函数名（用于避免函数名当作变量）
         for (Quadruple q : quadruples) {
             if ("FuncStart".equals(q.op) && q.result != null) {
@@ -50,7 +57,28 @@ public class AssemblyGenerator {
         assemblyCode.append("    CALL main\n");
         assemblyCode.append("    MOV AX, 4C00H\n");
         assemblyCode.append("    INT 21H\n\n");
-
+        // 生成中间代码对应汇编
+        for (Quadruple q : quadruples) {
+            switch (q.op) {
+                case "=" -> generateAssignment(q);
+                case "+", "-", "*", "/" -> generateArithmetic(q);
+                case "if" -> generateConditional(q);
+                case "goto" -> generateGoto(q);
+                case "label" -> generateLabel(q);
+                case "el", "ie", "we", "wh" -> generateControlLabel(q);
+                case "FuncStart" -> generateFunctionStart(q);
+                case "FuncEnd" -> generateFunctionEnd(q);
+                case "ARRAY_DECL" -> generateArrayDeclaration(q);
+                case "param_decl" -> generateParamDeclaration(q);
+                case "param" -> generateParamPassing(q);
+                case "FuncDef" -> generateFunctionDefinition(q);
+                case "call" -> generateFunctionCall(q);
+                case "return" -> generateReturnStatement(q);
+                case "var_decl" -> generateVariableDeclaration(q);
+                default -> throw new RuntimeException("Unsupported operation: " + q.op);
+            }
+        }
+        /*
         // 生成中间代码对应汇编
         for (Quadruple q : quadruples) {
             switch (q.op) {
@@ -88,15 +116,19 @@ public class AssemblyGenerator {
                 default -> throw new RuntimeException("Unsupported operation: " + q.op);
             }
         }
-
+        */
         // 程序结束
         assemblyCode.append("END _start\n");
     }
-    public void generateReturnStatement(Quadruple q) {
+    private void generateReturnStatement(Quadruple q) {
         if (!q.arg1.equals("_")) {
-            // 有返回值
+            // 有返回值，存入AX
             assemblyCode.append(format("    MOV AX, %s\n", toOperand(q.arg1)));
         }
+
+        // 恢复栈帧并返回
+        assemblyCode.append("    MOV SP, BP\n");
+        assemblyCode.append("    POP BP\n");
         assemblyCode.append("    RET\n");
     }
 
@@ -168,9 +200,19 @@ public class AssemblyGenerator {
         currentFunction = q.result.toLowerCase();
         functionNames.add(currentFunction);
         assemblyCode.append(format("%s PROC\n", currentFunction));
+
+        // 保存基指针并建立新栈帧
+        assemblyCode.append("    PUSH BP\n");
+        assemblyCode.append("    MOV BP, SP\n");
+
+        // 为局部变量预留栈空间
+        assemblyCode.append("    SUB SP, 20h\n");  // 可根据函数内局部变量数量调整
     }
 
     private void generateFunctionEnd(Quadruple q) {
+        // 恢复栈指针和基指针
+        assemblyCode.append("    MOV SP, BP\n");
+        assemblyCode.append("    POP BP\n");
         assemblyCode.append("    RET\n");
         assemblyCode.append(format("%s ENDP\n\n", currentFunction));
     }
@@ -180,6 +222,76 @@ public class AssemblyGenerator {
         if (!declaredVariables.contains(q.arg1)) {
             declaredVariables.add(q.arg1);
             dataSegmentDeclarations.add(format("    %s DW %d DUP(?)\n", q.arg1, size));
+        }
+    }
+
+    private void generateParamDeclaration(Quadruple q) {
+        // 参数声明在汇编中可以作为局部变量处理
+        // 形式为: param_decl, type, _, paramName
+        if (!declaredVariables.contains(q.result)) {
+            declaredVariables.add(q.result);
+        }
+    }
+
+    private void generateParamPassing(Quadruple q) {
+        // 从右向左传递参数（符合cdecl约定）
+        assemblyCode.append(format("    MOV AX, %s\n", toOperand(q.arg1)));
+        assemblyCode.append("    PUSH AX\n");
+    }
+
+    private void generateFunctionDefinition(Quadruple q) {
+        // 函数定义 FuncDef, returnType, paramCount, funcName
+        // 在汇编中，这通常只需记录函数名和参数数量
+        int paramCount = 0;
+        if (!q.arg2.equals("_")) {
+            try {
+                paramCount = Integer.parseInt(q.arg2);
+            } catch (NumberFormatException e) {
+                // 处理无法解析为数字的情况
+            }
+        }
+        // 可以存储函数信息以便后续使用
+    }
+
+    private void generateFunctionCall(Quadruple q) {
+        // 保存现场
+        assemblyCode.append("    PUSH AX\n");
+        assemblyCode.append("    PUSH BX\n");
+        assemblyCode.append("    PUSH CX\n");
+        assemblyCode.append("    PUSH DX\n");
+
+        // 调用函数
+        assemblyCode.append(format("    CALL %s\n", q.arg1.toLowerCase()));
+
+        // 清理参数栈
+        int paramCount = 0;
+        if (!q.arg2.equals("_")) {
+            try {
+                paramCount = Integer.parseInt(q.arg2);
+                if (paramCount > 0) {
+                    assemblyCode.append(format("    ADD SP, %d\n", paramCount * 2));
+                }
+            } catch (NumberFormatException e) {
+                // 处理解析错误
+            }
+        }
+
+        // 恢复现场
+        assemblyCode.append("    POP DX\n");
+        assemblyCode.append("    POP CX\n");
+        assemblyCode.append("    POP BX\n");
+        assemblyCode.append("    POP AX\n");
+
+        // 处理返回值
+        if (!q.result.equals("_")) {
+            assemblyCode.append(format("    MOV %s, AX\n", q.result));
+        }
+    }
+
+    private void generateVariableDeclaration(Quadruple q) {
+        // 处理变量声明：var_decl, type, _, varName
+        if (!declaredVariables.contains(q.result)) {
+            declaredVariables.add(q.result);
         }
     }
 

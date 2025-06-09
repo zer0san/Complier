@@ -176,7 +176,7 @@ public class RecursiveParser {
 
         // 生成函数相关的四元式
         gen.emitFuncLabel(funcName);// 生成函数标签
-        gen.emitFuncParam(returnType, funcName, paramNames);// 生成函数参数四元式
+        gen.emitFuncParam(returnType, funcName, paramNames,paramTypes);// 生成函数参数四元式
         parseBlock();// 解析函数体，包含语句列表
         gen.emitFuncEnd(funcName);// 生成函数结束四元式
     }
@@ -221,7 +221,7 @@ public class RecursiveParser {
             paramsWithTypes.add(new String[]{type, paramName});
 
             // 记录参数声明
-            gen.declareParameter(paramName);
+            gen.declareParameter(type, paramName);
 
             // 检查是否有更多参数
             if (lookahead().value.equals(",")) {
@@ -294,6 +294,15 @@ public class RecursiveParser {
                 Expr funcCall = parseFunctionCall(id);// 解析函数调用
                 match(";");
                 gen.generateFunctionCall((FunctionCallExpr)funcCall);// 生成函数调用四元式
+            }  else if (lookahead().value.equals("[")) {
+                // 数组元素赋值 - 添加这部分处理
+                match("[");
+                Expr indexExpr = parseExpr();  // 解析数组索引
+                match("]");
+                match("=");
+                Expr valueExpr = parseExpr();  // 解析赋值表达式
+                gen.assignArray(id, indexExpr, valueExpr);
+                match(";");
             } else if (lookahead().value.equals("=")) {
                 // 赋值语句
                 match("=");

@@ -42,7 +42,7 @@ public class QuadrupleGenerator {
             this.paramNames = paramNames;
         }
     }
-    
+
     // 函数表，存储所有函数的签名信息，键为函数名
     private final Map<String, FunctionSignature> functionTable = new HashMap<>();
     // 当前正在处理的函数名，用于上下文相关的操作如返回语句检查
@@ -88,21 +88,8 @@ public class QuadrupleGenerator {
             return "string";
         } else if (expr instanceof VarExpr) {
             VarExpr varExpr = (VarExpr) expr;
-            // 查找变量声明获取类型 - 需要查找所有类型的声明
-            for (int j = quds.size() - 1; j >= 0; j--) {
-                Quadruple q = quds.get(j);
-                // 查找参数声明
-                if ("param_decl".equals(q.op) && varExpr.name.equals(q.result)) {
-                    return q.arg1.equals("_") ? "int" : q.arg1;
-                }
-                // 查找局部变量声明 - 添加一个新的四元式类型
-                if ("var_decl".equals(q.op) && varExpr.name.equals(q.result)) {
-                    return q.arg1.equals("_") ? "int" : q.arg1;
-                }
-            }
-            // 不再默认返回int，而是抛出异常
-            throw new RuntimeException("未声明的变量: " + varExpr.name);
-
+            // 使用getVarType获取变量类型，它能正确识别数组类型
+            return getVarType(varExpr.name);
         } else if (expr instanceof FunctionCallExpr) {
             // 函数调用表达式的类型是函数的返回类型
             FunctionCallExpr funcCall = (FunctionCallExpr) expr;
@@ -137,17 +124,37 @@ public class QuadrupleGenerator {
     }
 
     /**
-     * 检查两个类型是否兼容(可以相互赋值)
+     * 检查两个类型是否兼容(可以相互赋值)，添加数组类型检查
      * @param expectedType 期望的类型
      * @param actualType 实际的类型
      * @return 如果类型兼容则返回true，否则返回false
      */
     private boolean isTypeCompatible(String expectedType, String actualType) {
+        // 完全相同的类型总是兼容的
         if (expectedType.equals(actualType)) {
             return true;
         }
 
-        // 允许的类型转换规则
+        // 数组类型检查
+        boolean expectedIsArray = expectedType.endsWith("[]");
+        boolean actualIsArray = actualType.endsWith("[]");
+
+        // 如果一个是数组，另一个不是数组，则绝对不兼容
+        if (expectedIsArray != actualIsArray) {
+            throw new RuntimeException("类型不兼容: 数组类型不能与基本类型互相转换 (" + actualType + " → " + expectedType + ")");
+        }
+
+        // 如果都是数组，则必须是相同类型的数组
+        if (expectedIsArray && actualIsArray) {
+            String expectedBaseType = expectedType.substring(0, expectedType.length() - 2);
+            String actualBaseType = actualType.substring(0, actualType.length() - 2);
+            if (!expectedBaseType.equals(actualBaseType)) {
+                throw new RuntimeException("数组类型不兼容: " + actualType + " 不能转换为 " + expectedType);
+            }
+            return true;
+        }
+
+        // 允许的基本类型转换规则
         if (expectedType.equals("int") && actualType.equals("char")) {
             return true; // char可以转换为int
         }
@@ -333,14 +340,17 @@ public class QuadrupleGenerator {
 
         return temp;
     }
-    
+
     /**
      * 生成参数声明的四元式
+     * @param type 参数类型
      * @param paramName 参数名
      */
-    public void declareParameter(String paramName) {
-        quds.add(new Quadruple("param_decl", "_", "_", paramName));
+    public void declareParameter(String type, String paramName) {
+        quds.add(new Quadruple("param_decl",/*type*/"_", "_", paramName));
     }
+
+
 
     /**
      * 生成返回语句的四元式(带类型检查)
@@ -356,12 +366,8 @@ public class QuadrupleGenerator {
                 String value = generateExpr(returnExpr);
                 String exprType = getExprType(returnExpr);
 
-                // 类型检查
-                if (!isTypeCompatible(declaredReturnType, exprType)) {
-                    throw new RuntimeException("函数 '" + currentFunction +
-                            "' 返回类型不匹配: 期望 " + declaredReturnType +
-                            "，实际为 " + exprType);
-                }
+                // 直接调用isTypeCompatible，它会在类型不兼容时抛出异常
+                isTypeCompatible(declaredReturnType, exprType);
 
                 quds.add(new Quadruple("return", value, "_", "_"));
             } else {
@@ -462,14 +468,23 @@ public class QuadrupleGenerator {
             Quadruple q = quds.get(j);
             // 查找参数声明
             if ("param_decl".equals(q.op) && varName.equals(q.result)) {
-                return q.arg1.equals("_") ? "int" : q.arg1;
+                return q.arg1;
             }
             // 查找局部变量声明
             if ("var_decl".equals(q.op) && varName.equals(q.result)) {
                 return q.arg1.equals("_") ? "int" : q.arg1;
             }
+            // 查找数组声明
+            if ("ARRAY_DECL".equals(q.op) && varName.equals(q.arg1)) {
+                // 向上查找数组类型
+                for (int k = j; k >= 0; k--) {
+                    Quadruple decl = quds.get(k);
+                    if ("var_decl".equals(decl.op) && varName.equals(decl.result)) {
+                        return decl.arg1 + "[]"; // 添加数组标记
+                    }
+                }
+            }
         }
-        // 不再默认返回int，而是抛出异常
         throw new RuntimeException("未声明的变量: " + varName);
     }
 
@@ -532,31 +547,40 @@ public class QuadrupleGenerator {
     public List<Quadruple> getQuadruples() {
         return quds;
     }
-    
+
     /**
      * 生成函数声明和参数的四元式
      * @param returnType 函数返回类型
      * @param funcName 函数名
-     * @param argList 参数名称列表
-     * @throws RuntimeException 当无法确定参数类型时
+     * @param paramNames 参数名称列表
+     * @param paramTypes 参数类型列表
+     * @throws RuntimeException 当函数名冲突或参数数量不匹配时
      */
-    public void emitFuncParam(String returnType, String funcName, List<String> argList) {
+    public void emitFuncParam(String returnType, String funcName,
+                              List<String> paramNames, List<String> paramTypes) {
         // 检查函数名是否与变量名冲突
         if (declaredVariables.contains(funcName)) {
             throw new RuntimeException("函数名 '" + funcName + "' 与已声明变量冲突");
         }
+
         // 检查函数是否已经声明
         if (functionTable.containsKey(funcName)) {
             throw new RuntimeException("函数 '" + funcName + "' 重复声明");
         }
 
+        // 参数数量检查
+        if (paramTypes.size() != paramNames.size()) {
+            throw new RuntimeException("函数 '" + funcName + "' 的参数类型数量与参数名数量不匹配");
+        }
+
         // 检查参数名重复
-        Set<String> paramNames = new HashSet<>();
-        for (String param : argList) {
-            if (!paramNames.add(param)) {
+        Set<String> paramSet = new HashSet<>();
+        for (String param : paramNames) {
+            if (!paramSet.add(param)) {
                 throw new RuntimeException("函数 '" + funcName + "' 中参数名 '" + param + "' 重复");
             }
         }
+
         // 初始化返回状态跟踪
         if (!"void".equals(returnType)) {
             functionHasReturn.put(funcName, false);
@@ -564,32 +588,16 @@ public class QuadrupleGenerator {
 
         // 设置当前函数上下文
         currentFunction = funcName;
-        // 解析RecursiveParser中参数名称列表，获取类型信息
-        List<String> paramTypes = new ArrayList<>();
-        // 获取参数类型信息 (从第一个参数的声明中提取)
-        for (int i = 0; i < argList.size(); i++) {
-            String paramName = argList.get(i);
-            // 查找参数类型的四元式
-            for (int j = quds.size() - 1; j >= 0; j--) {
-                Quadruple q = quds.get(j);
-                if ("param_decl".equals(q.op) && paramName.equals(q.result)) {
-                    paramTypes.add(q.arg1.equals("_") ? "int" : q.arg1); // 如果类型未指定，默认为int
-                    break;
-                }
-            }
-            // 如果找不到类型信息，抛出异常
-            if (paramTypes.size() <= i) {
-                throw new RuntimeException("无法确定函数 '" + funcName + "' 参数 '" + paramName + "' 的类型");
-            }
-        }
 
         // 存储函数签名
-        functionTable.put(funcName, new FunctionSignature(returnType, paramTypes, argList));
+        functionTable.put(funcName, new FunctionSignature(returnType, paramTypes, paramNames));
 
-        // 生成四元式，同时添加类型信息
-        quds.add(new Quadruple("FuncDef", returnType, String.valueOf(argList.size()), funcName));
-        for (int i = 0; i < argList.size(); i++) {
-            String paramName = argList.get(i);
+        // 生成函数定义四元式
+        quds.add(new Quadruple("FuncDef", returnType, String.valueOf(paramNames.size()), funcName));
+
+        // 为每个参数生成带正确类型的声明四元式
+        for (int i = 0; i < paramNames.size(); i++) {
+            String paramName = paramNames.get(i);
             String paramType = paramTypes.get(i);
             quds.add(new Quadruple("param_decl", paramType, "_", paramName));
         }
