@@ -1,5 +1,7 @@
 package com.Parser.Quadruple;
 
+import lombok.Getter;
+
 import java.util.*;
 import static java.lang.String.format;
 
@@ -10,6 +12,7 @@ public class AssemblyGenerator {
     private int tempCounter = 0;
     private String currentFunction = "MAIN";
     private final Set<String> functionNames = new HashSet<>();
+    @Getter
     private SymbolTable symbolTable = new SymbolTable();
     public AssemblyGenerator() {
         // 初始化模型和段

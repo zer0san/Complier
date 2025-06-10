@@ -2,81 +2,328 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Segoe UI", sans-serif;
+    font-family: "Courier New", monospace;
 }
 
 body {
-    background: #f2f4f8;
-    padding: 40px;
-    display: flex;
+    background: #0c0c0c;
     justify-content: center;
+    overflow: auto;
+    color: #80cc80;
 }
 
-.container {
+#container {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 600px;
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
 }
 
 .card {
-    background: white;
-    border-radius: 12px;
+    background: #1a1a1a;
+    border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 16px rgba(128, 204, 128, 0.05);
+    border: 1px solid #333;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 textarea {
     width: 100%;
     height: 150px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
     padding: 12px;
     resize: vertical;
     font-size: 14px;
     line-height: 1.5;
     outline: none;
-    transition: border 0.3s ease;
+    transition: border 0.15s ease;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 10px;
+    min-height: 80px;
+    max-height: none;
+    background: #000;
+    color: #80cc80;
 }
 
 textarea:focus {
-    border-color: #4a90e2;
+    border-color: #80cc80;
+    box-shadow: 0 0 5px rgba(128, 204, 128, 0.2);
+}
+
+textarea::placeholder {
+    color: #666;
+}
+
+#ipt_area {
+    min-height: 400px;
+    resize: vertical;
+    flex: none;
+    height: 400px;
 }
 
 .actions {
-    margin-top: 10px;
+    margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
 }
 
 #upload {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
+    background-color: #1a2e1a;
+    color: #80cc80;
+    border: 1px solid #80cc80;
+    border-radius: 4px;
+    padding: 10px 20px;
     font-size: 14px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.15s ease;
+    font-family: 'Courier New', monospace;
 }
 
 #upload:hover {
-    background-color: #357ab8;
+    background-color: #80cc80;
+    color: #000;
+}
+
+#read_file {
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #1a1a1a;
+    cursor: pointer;
+    color: #80cc80;
 }
 
 .upload-btn {
-    display: inline-block;
-    background-color: #eee;
-    color: #333;
+    background-color: #1a2e1a;
+    color: #80cc80;
+    border: 1px solid #80cc80;
+    border-radius: 4px;
     padding: 8px 16px;
-    border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    transition: all 0.15s ease;
+    font-family: 'Courier New', monospace;
+}
+
+.upload-btn:hover {
+    background-color: #80cc80;
+    color: #000;
 }
 
 #opt_title {
     font-weight: bold;
-    font-size: 16px;
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #80cc80;
+    text-shadow: 0 0 2px rgba(128, 204, 128, 0.3);
+}
+
+.spilter {
+    width: 8px;
+    /*background: linear-gradient(to right, #333, #555, #333);*/
+    cursor: col-resize;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.1s ease, opacity 0.1s ease;
+}
+
+.spilter:hover {
+    background: linear-gradient(to right, #555, #777, #555);
+}
+
+.spilter::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 30px;
+    background: #80cc80;
+    border-radius: 2px;
+    box-shadow: 0 -8px 0 #80cc80, 0 8px 0 #80cc80;
+    transition: all 0.1s ease;
+}
+
+.spilter:hover::before {
+    background: #99dd99;
+    box-shadow: 0 -8px 0 #99dd99, 0 8px 0 #99dd99;
+}
+
+#divLeft, #divRight {
+    overflow: auto;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+#divLeft {
+    flex: 0 0 50%;
+}
+
+#divRight {
+    flex: 1;
+}
+
+#output-container {
+    min-height: 100%;
+    overflow: auto;
+}
+
+/* Output section headers with toggle functionality */
+.output-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    transition: all 0.15s ease;
+}
+
+.output-section.collapsed {
+    margin-bottom: 5px;
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    flex-shrink: 0;
+}
+
+.output-header:hover {
+    background: #333;
+    border-color: #80cc80;
+}
+
+.output-label {
+    font-weight: bold;
+    color: #80cc80;
+    font-size: 14px;
+    text-shadow: 0 0 2px rgba(128, 204, 128, 0.2);
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #80cc80;
+    transition: transform 0.1s ease, color 0.1s ease;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.toggle-btn:hover {
+    color: #99dd99;
+    background: rgba(128, 204, 128, 0.05);
+    text-shadow: 0 0 3px rgba(128, 204, 128, 0.3);
+}
+
+.toggle-btn.collapsed {
+    transform: rotate(-90deg);
+}
+
+.output-textarea {
+    transition: opacity 0.15s ease, padding 0.15s ease, border 0.15s ease;
+    overflow: auto;
+    min-height: 120px;
+    resize: vertical;
+    flex: none;
+    height: 200px;
+}
+
+.output-textarea.collapsed {
+    height: 0 !important;
+    min-height: 0 !important;
+    opacity: 0;
+    margin-bottom: 0;
+    padding: 0 !important;
+    border: none !important;
+    resize: none;
+}
+
+/* Dynamic height distribution based on visible sections */
+.output-textarea.single-visible {
+    height: calc(100vh - 200px);
+    min-height: 300px;
+}
+
+.output-textarea.two-visible {
+    height: calc(50vh - 100px);
+    min-height: 150px;
+}
+
+.output-textarea.three-visible {
+    height: calc(33.333vh - 80px);
+    min-height: 120px;
+}
+
+.output-textarea.expanded {
+    height: 60vh !important;
+    min-height: 400px !important;
+}
+
+/* Remove conflicting height classes */
+.output-textarea.single-visible,
+.output-textarea.two-visible,
+.output-textarea.three-visible {
+    /* Remove fixed heights to allow manual resize */
+}
+
+/* Remove default height settings for responsive textarea sizing */
+#opt_area, #asm, #tokens, #symbol_table {
+    resize: vertical;
+    min-height: 120px;
+    height: 200px;
+    flex: none;
+}
+
+/* Better scrollbars for terminal theme */
+textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+textarea::-webkit-scrollbar-track {
+    background: #222;
+    border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+    background: #83f383;
+    border-radius: 4px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+    background: #9bf69b;
+}
+
+/* Terminal-like selection colors */
+textarea::selection {
+    background: rgba(128, 204, 128, 0.2);
+    color: #fff;
+}
+
+/* Error text styling */
+.error-text {
+    color: #cc8080 !important;
+    text-shadow: 0 0 2px rgba(204, 128, 128, 0.3);
+}
+
+/* Success text styling */
+.success-text {
+    color: #83f283 !important;
+    /* text-shadow: 0 0 2px rgba(149, 232, 149, 0.3); */
 }

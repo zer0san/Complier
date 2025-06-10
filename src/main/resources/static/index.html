@@ -3,71 +3,80 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Fake!</title>
+    <title>编译器在线工具</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <script src="./script.js"></script>
+    <script src="./spilter.js"></script>
+    <script src="./toggle.js"></script>
 
-    <div class="container">
-        <div id="input" class="card">
-            <textarea id="ipt_area" placeholder="请输入内容..." onsubmit="showFileContent">
-                int a;
-                b = 1;
-            </textarea>
-            <div class="actions">
-                <input type="file" id="read_file">
-                <button id="upload">提交</button>
+    <div id="container">
+        <div id="divLeft" class="div-spilter">
+            <div id="input" class="card">
+                <div class="actions">
+                    <label for="read_file" class="upload-btn">选择文件</label>
+                    <input type="file" id="read_file" accept=".c,.txt" style="display: none;">
+                    <button id="upload">编译运行</button>
+                </div>
+                <textarea id="ipt_area" placeholder="请输入C语言代码...">int f()
+{
+    return 1;
+}
+
+int main(){
+    int a;
+    a = 1;
+    a = f();
+    return 0;
+}</textarea>
             </div>
         </div>
 
-        <div id="output" class="card">
-            <div id="opt_title">结果输出</div>
-            <textarea id="opt_area" placeholder="这里将显示结果..." readonly></textarea>
-            <textarea id="asm" placeholder="asmCode" readonly></textarea>
-            <textarea id="tokens" placeholder="tokens" readonly></textarea>
+        <div class="spilter" title="拖动调整大小，双击隐藏/显示左侧面板"></div>
+
+        <div id="divRight" class="div-spilter">
+            <div id="output-container" class="card">
+                <div id="opt_title">编译结果
+                    <button id="toggle-all" class="toggle-btn" title="点击展开/收起所有">▼</button>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="opt_area">
+                        <span class="output-label">四元式中间代码</span>
+                        <button class="toggle-btn" title="点击展开/收起">▼</button>
+                    </div>
+                    <textarea id="opt_area" class="output-textarea" placeholder="四元式中间代码将在这里显示..." readonly></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="asm">
+                        <span class="output-label">汇编代码</span>
+                        <button class="toggle-btn" title="点击展开/收起">▼</button>
+                    </div>
+                    <textarea id="asm" class="output-textarea" placeholder="目标汇编代码将在这里显示..." readonly></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="tokens">
+                        <span class="output-label">词法分析结果</span>
+                        <button class="toggle-btn" title="点击展开/收起">▼</button>
+                    </div>
+                    <textarea id="tokens" class="output-textarea" placeholder="Token序列将在这里显示..." readonly></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="symbol_table">
+                        <span class="output-label">符号表</span>
+                        <button class="toggle-btn" title="点击展开/收起">▼</button>
+                    </div>
+                    <textarea id="symbol_table" class="output-textarea" placeholder="符号表将在这里显示..." readonly></textarea>
+                </div>
+            </div>
         </div>
     </div>
 </body>
 
 </html>
-
-<script>
-    // Modern async/await approach
-    async function handleFileUpload(file) {
-        try {
-            const content = await readFileAsText(file);
-            document.getElementById('ipt_area').value = content;
-
-            // Do something after file is loaded
-            await processFileContent(content);
-        } catch (error) {
-            console.error('Error reading file:', error);
-        }
-    }
-
-    function readFileAsText(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = event => resolve(event.target.result);
-            reader.onerror = error => reject(error);
-            reader.readAsText(file);
-        });
-    }
-
-    async function processFileContent(content) {
-        document.getElementById('ipt_area').value = content;
-    }
-
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('read_file').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                handleFileUpload(file);
-            }
-        });
-    });
-</script>

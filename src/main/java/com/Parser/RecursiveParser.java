@@ -1,13 +1,14 @@
 package com.Parser;
 
-import java.util.*;
-
-import com.Parser.*;
-import com.Lexer.*;
 import com.Lexer.Token;
 import com.Parser.Quadruple.*;
 import lombok.Data;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 递归下降语法分析器
@@ -23,7 +24,7 @@ public class RecursiveParser {
     private int labelId = 0;
     // 四元式生成器，用于生成中间代码
     private final QuadrupleGenerator gen = new QuadrupleGenerator();
-    
+
     // 原始源代码，用于错误报告
     @Setter
     String sourceCode = "";
@@ -34,6 +35,7 @@ public class RecursiveParser {
 
     /**
      * 构造函数
+     *
      * @param tokens 词法分析器生成的Token序列
      */
     public RecursiveParser(List<Token> tokens) {
@@ -42,6 +44,7 @@ public class RecursiveParser {
 
     /**
      * 查看当前token，但不消耗它
+     *
      * @return 当前位置的Token，如果已到末尾则返回EOF
      */
     private Token lookahead() {
@@ -53,6 +56,7 @@ public class RecursiveParser {
 
     /**
      * 匹配并消耗指定值的token
+     *
      * @param value 期望的token值
      * @return 匹配的token
      * @throws RuntimeException 如果当前token与期望值不匹配
@@ -72,6 +76,7 @@ public class RecursiveParser {
 
     /**
      * 匹配并消耗指定类型的token
+     *
      * @param type 期望的token类型
      * @return 匹配的token
      * @throws RuntimeException 如果当前token与期望类型不匹配
@@ -89,12 +94,13 @@ public class RecursiveParser {
 
     /**
      * 生成新的唯一标签名
+     *
      * @return 格式为"L数字"的标签字符串
      */
     private String newLabel() {
         return "L" + (labelId++);
     }
-    
+
     /**
      * 解析return语句
      * 语法形式: return [expr];
@@ -134,12 +140,15 @@ public class RecursiveParser {
     /**
      * 判断当前位置是否为函数声明的开始
      * 函数声明格式: 类型 标识符(参数列表)
+     *
      * @return 是否为函数声明开始
      */
     private boolean isFuncDeclStart() {
         String value = lookahead().value;
         // 使用isValidType()检查类型，包括void
-        if(!isValidType(value)) return false;
+        if (!isValidType(value)) {
+            return false;
+        }
 
         // 尝试看下一个和下下个token是否符合函数声明模式
         if (pos + 1 < tokens.size() && tokens.get(pos + 1).type == Token.Type.IDENTIFIER) {
@@ -176,21 +185,23 @@ public class RecursiveParser {
 
         // 生成函数相关的四元式
         gen.emitFuncLabel(funcName);// 生成函数标签
-        gen.emitFuncParam(returnType, funcName, paramNames,paramTypes);// 生成函数参数四元式
+        gen.emitFuncParam(returnType, funcName, paramNames, paramTypes);// 生成函数参数四元式
         parseBlock();// 解析函数体，包含语句列表
         gen.emitFuncEnd(funcName);// 生成函数结束四元式
     }
+
     /**
      * 判断是否为有效类型关键字
      */
     private boolean isValidType(String value) {
         return value.equals("int") || value.equals("char") ||
-                value.equals("string") || value.equals("void");
+               value.equals("string") || value.equals("void");
     }
 
     /**
      * 解析函数参数列表
      * 语法形式: type1 param1, type2 param2, ...
+     *
      * @return 包含参数类型和名称的列表，每个参数表示为[类型,名称]的数组
      */
     private List<String[]> parseParamList() {
@@ -233,6 +244,7 @@ public class RecursiveParser {
 
         return paramsWithTypes;
     }
+
     /**
      * 解析语句列表
      * 不断解析语句，直到遇到右大括号或文件结尾
@@ -246,6 +258,7 @@ public class RecursiveParser {
     /**
      * 解析函数调用
      * 语法形式: 函数名(参数1, 参数2, ...)
+     *
      * @param funcName 函数名
      * @return 函数调用表达式对象
      */
@@ -271,7 +284,7 @@ public class RecursiveParser {
         match(")");
         return new FunctionCallExpr(funcName, arguments);
     }
-    
+
     /**
      * 解析单个语句
      * 根据当前token判断语句类型并调用对应的解析方法
@@ -293,8 +306,8 @@ public class RecursiveParser {
                 // 函数调用
                 Expr funcCall = parseFunctionCall(id);// 解析函数调用
                 match(";");
-                gen.generateFunctionCall((FunctionCallExpr)funcCall);// 生成函数调用四元式
-            }  else if (lookahead().value.equals("[")) {
+                gen.generateFunctionCall((FunctionCallExpr) funcCall);// 生成函数调用四元式
+            } else if (lookahead().value.equals("[")) {
                 // 数组元素赋值 - 添加这部分处理
                 match("[");
                 Expr indexExpr = parseExpr();  // 解析数组索引
@@ -309,16 +322,18 @@ public class RecursiveParser {
                 Expr expr = parseExpr();
                 gen.assign(id, expr);
                 match(";");
+            } else if (lookahead().value.equals(";") || true) {
+                throw new RuntimeException(" unknown statement after identifier after " + id+ "\n");
             }
         }
         // 代码块
         else if (t.value.equals("{")) {
             parseBlock();
-        } 
+        }
         // if语句
         else if (t.value.equals("if")) {
             parseIfStmt();
-        } 
+        }
         // while循环
         else if (t.value.equals("while")) {
             parseWhileStmt();
@@ -389,6 +404,7 @@ public class RecursiveParser {
     /**
      * 解析条件表达式
      * 语法形式: expr 操作符 expr
+     *
      * @return 条件表达式对象
      */
     private Condition parseCondition() {
@@ -405,10 +421,10 @@ public class RecursiveParser {
     private void parseDeclStmt() {
         String type = match(lookahead().value).value; // 获取变量类型(int/char/string)
         String varName = match(Token.Type.IDENTIFIER).value;
-        
+
         // 记录变量类型信息
         gen.declareVariable(type, varName);
-        
+
         // 检查是否为数组声明: int a[10];
         if (lookahead().value.equals("[")) {
             match("[");
@@ -416,7 +432,7 @@ public class RecursiveParser {
             match("]");
             gen.declareArray(varName, Integer.parseInt(size));
         }
-        
+
         match(";");
     }
 
@@ -458,6 +474,7 @@ public class RecursiveParser {
     /**
      * 解析加减表达式
      * 语法形式: 项 (+|-) 项 ...
+     *
      * @return 表达式对象
      */
     private Expr parseExpr() {
@@ -474,6 +491,7 @@ public class RecursiveParser {
     /**
      * 解析乘除表达式
      * 语法形式: 因子 (*|/) 因子 ...
+     *
      * @return 表达式对象
      */
     private Expr parseTerm() {
@@ -490,6 +508,7 @@ public class RecursiveParser {
     /**
      * 解析表达式因子(基本单元)
      * 可以是:变量、数字、字符、字符串、数组元素、函数调用或括号表达式
+     *
      * @return 表达式对象
      */
     private Expr parseFactor() {
@@ -533,6 +552,7 @@ public class RecursiveParser {
 
     /**
      * 输出生成的四元式中间代码
+     *
      * @return 四元式列表
      */
     public List<Quadruple> show() {
