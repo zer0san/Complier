@@ -80,48 +80,26 @@ public class AssemblyGenerator {
                 case "call" -> generateFunctionCall(q);
                 case "return" -> generateReturnStatement(q);
                 case "var_decl" -> generateVariableDeclaration(q);
-                default -> throw new RuntimeException("Unsupported operation: " + q.op);
-            }
-        }
-        /*
-        // 生成中间代码对应汇编
-        for (Quadruple q : quadruples) {
-            switch (q.op) {
-                case "=" -> generateAssignment(q);
-                case "+", "-", "*", "/" -> generateArithmetic(q);
-                case "if" -> generateConditional(q);
-                case "goto" -> generateGoto(q);
-                case "label" -> generateLabel(q);
-                case "el", "ie", "we", "wh" -> generateControlLabel(q);
-                case "FuncStart" -> generateFunctionStart(q);
-                case "FuncEnd" -> generateFunctionEnd(q);
-                case "ARRAY_DECL" -> generateArrayDeclaration(q);
-                case "call" -> {
-                    // 保存现场
-                    assemblyCode.append("    PUSH AX\n");
-                    assemblyCode.append("    PUSH BX\n");
-                    assemblyCode.append("    PUSH CX\n");
-                    assemblyCode.append("    PUSH DX\n");
-
-                    // 调用函数
-                    assemblyCode.append(format("    CALL %s\n", q.arg1.toUpperCase()));
-
-                    // 恢复现场
-                    assemblyCode.append("    POP DX\n");
-                    assemblyCode.append("    POP CX\n");
-                    assemblyCode.append("    POP BX\n");
-                    assemblyCode.append("    POP AX\n");
-
-                    // 如果有返回值，保存到目标变量
-                    if (!q.result.equals("_")) {
-                        assemblyCode.append(format("    MOV %s, AX\n", q.result));
+                case "==", "!=", "<", "<=", ">", ">=" -> {
+                    // 处理比较操作
+                    String op1 = toOperand(q.arg1);
+                    String op2 = toOperand(q.arg2);
+                    assemblyCode.append(format("    MOV AX, %s\n", op1));
+                    assemblyCode.append(format("    CMP AX, %s\n", op2));
+                    switch (q.op) {
+                        case "==" -> assemblyCode.append(format("    JE %s\n", q.result));
+                        case "!=" -> assemblyCode.append(format("    JNE %s\n", q.result));
+                        case "<" -> assemblyCode.append(format("    JL %s\n", q.result));
+                        case "<=" -> assemblyCode.append(format("    JLE %s\n", q.result));
+                        case ">" -> assemblyCode.append(format("    JG %s\n", q.result));
+                        case ">=" -> assemblyCode.append(format("    JGE %s\n", q.result));
                     }
                 }
-                case "return" -> generateReturnStatement(q);
                 default -> throw new RuntimeException("Unsupported operation: " + q.op);
             }
         }
-        */
+
+
         // 程序结束
         assemblyCode.append("END _start\n");
     }
