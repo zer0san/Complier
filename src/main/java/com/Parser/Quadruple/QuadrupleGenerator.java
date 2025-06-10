@@ -1,4 +1,4 @@
-package com.Parser.Quadruple;
+package com.Parser.Quadruple;// 表示该类属于com.Parser.Quadruple包
 
 import java.util.*;
 
@@ -20,6 +20,10 @@ public class QuadrupleGenerator {
     private final Set<String> declaredVariables = new HashSet<>();
     // 存储函数是否有返回值的映射，键为函数名，值为是否有返回值
     private final Map<String, Boolean> functionHasReturn = new HashMap<>();
+    // 新增：按作用域（函数名或 "global"）区分的声明变量集合
+    private final Map<String, Set<String>> scopedDeclaredVariables = new HashMap<>();
+
+
 
     /**
      * 函数签名内部类，用于存储函数的返回类型、参数类型和参数名称
@@ -55,16 +59,29 @@ public class QuadrupleGenerator {
      * @throws RuntimeException 当变量重复声明时
      */
     public void declareVariable(String type, String varName) {
-        // 检查变量是否已经声明
-        if (declaredVariables.contains(varName)) {
-            throw new RuntimeException("变量 '" + varName + "' 重复声明");
-        }
-        // 检查变量名是否与函数名冲突
-        if (functionTable.containsKey(varName)) {
-            throw new RuntimeException("变量名 '" + varName + "' 与已声明函数冲突");
+
+        if (currentFunction == null) {
+            // 全局作用域，沿用原有 declaredVariables 逻辑
+            if (declaredVariables.contains(varName)) {
+                throw new RuntimeException("变量 '" + varName + "' 重复声明");
+            }
+            if (functionTable.containsKey(varName)) {
+                throw new RuntimeException("变量名 '" + varName + "' 与已声明函数冲突");
+            }
+            declaredVariables.add(varName);
+        } else {
+            // 函数作用域，使用新建的 scopedDeclaredVariables
+            Set<String> vars = scopedDeclaredVariables.get(currentFunction);
+            if (vars.contains(varName)) {
+                throw new RuntimeException("变量 '" + varName + "' 在函数 '" + currentFunction + "' 中重复声明");
+            }
+            if (functionTable.containsKey(varName)) {
+                throw new RuntimeException("变量名 '" + varName + "' 与已声明函数冲突");
+            }
+            vars.add(varName);
+            declaredVariables.add(varName);
         }
         // 添加到已声明变量集合
-        declaredVariables.add(varName);
 
         // 生成变量声明四元式
         quds.add(new Quadruple("var_decl", type, "_", varName));
@@ -558,6 +575,10 @@ public class QuadrupleGenerator {
      */
     public void emitFuncParam(String returnType, String funcName,
                               List<String> paramNames, List<String> paramTypes) {
+
+        // 初始化函数作用域的局部变量集合
+        scopedDeclaredVariables.put(funcName, new HashSet<>());
+
         // 检查函数名是否与变量名冲突
         if (declaredVariables.contains(funcName)) {
             throw new RuntimeException("函数名 '" + funcName + "' 与已声明变量冲突");
@@ -600,6 +621,7 @@ public class QuadrupleGenerator {
             String paramName = paramNames.get(i);
             String paramType = paramTypes.get(i);
             quds.add(new Quadruple("param_decl", paramType, "_", paramName));
+            scopedDeclaredVariables.get(funcName).add(paramNames.get(i));
         }
     }
 }

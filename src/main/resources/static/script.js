@@ -1,3 +1,10 @@
+
+function mapToText(map) {
+    return Object.entries(map)
+        .sort((a, b) => a[1] - b[1])                    // 按 value 排序
+        .map(([key, val]) => `${val}: ${key}`)          // 格式化为 "序号: 元素"
+        .join('\n');
+}
 $(document).ready(function () {
     // Tab key handling for code indentation
     $("#ipt_area").on("keydown", function (e) {
@@ -59,6 +66,12 @@ $(document).ready(function () {
                     $("#tokens").text(result.tokens || "");
                     $("#asm").text(result.asmCode || "");
                     $("#symbol_table").text(result.symbolTable || "");
+                    $("#keyword_table").text(mapToText(result.keywordTable));
+                    $("#identifier_table").text(mapToText(result.identifierTable));
+                    $("#constant_table").text(mapToText(result.constantTable));
+                    $("#operator_table").text(mapToText(result.operatorTable));
+                    $("#separator_table").text(mapToText(result.separatorTable));
+
                 }
             },
             error: function (xhr, status, error) {

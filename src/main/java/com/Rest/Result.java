@@ -28,7 +28,7 @@ public class Result {
     private Map<String, Integer> constantTable = new HashMap<>();
 
     @Getter
-    @Builder.Default
+    @Builder.Default//
     private Map<String, Integer> operatorTable = new HashMap<>();
     String tokens;
 
@@ -44,6 +44,7 @@ public class Result {
     public String asmCode;
     @Setter
     public String symbolTable;
+
 
     public static Result ok(String res, String tokens, String asmCode, Lexer lexer) {
         Result r = Result.builder().tokens(tokens).success(true).res(res).asmCode(asmCode).build();

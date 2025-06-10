@@ -85,6 +85,7 @@ public class SymbolTable {
 
         // 重置当前作用域，准备第二遍处理
         currentScope = "global";
+        // 当前作用域设置为函数名
 
         // 第二遍：构建符号表
         for (Quadruple q : quadruples) {
@@ -92,6 +93,7 @@ public class SymbolTable {
                 case "FuncStart":
                     // 函数开始
                     currentScope = q.result;
+
                     break;
 
                 case "FuncEnd":
@@ -101,6 +103,7 @@ public class SymbolTable {
 
                 case "FuncDef":
                     // 函数定义：FuncDef, returnType, paramCount, funcName
+                    currentScope = q.result;
                     addSymbol(q.result, q.arg1, "function", "global");
                     break;
 
@@ -113,6 +116,9 @@ public class SymbolTable {
                         paramType = typeTable.get(q.result);
                     } else {
                         paramType = inferParameterType(q.result, quadruples, currentScope);
+                    }
+                    if (q.arg1.equals("_")) {
+                    currentScope = "unknown"; // 如果没有类型信息，设置为未知
                     }
                     addSymbol(q.result, paramType, "parameter", currentScope);
                     break;
@@ -215,11 +221,13 @@ public class SymbolTable {
     private void addSymbol(String name, String type, String kind, String scope) {
         if (name == null || name.isEmpty() || name.equals("_"))
             return;
-
+        String key = scope + "#" + name;
         SymbolInfo info = new SymbolInfo(name, type, kind, scope);
-        symbols.put(name, info);
-        scopeTable.put(name, scope);
-        typeTable.put(name, type);
+        // 输出调试信息
+        System.out.printf("添加符号: %s, 类型: %s, 种类: %s, 作用域: %s%n", name, type, kind, scope);
+        symbols.put(key, info);
+        scopeTable.put(key, scope);
+        typeTable.put(key, type);
     }
 
     /**
@@ -228,13 +236,13 @@ public class SymbolTable {
     private void addArray(String name, String type, int size, String scope) {
         if (name == null || name.isEmpty())
             return;
-
+        String key = scope + "#" + name;
         SymbolInfo info = new SymbolInfo(name, type, "array", scope, size);
-        symbols.put(name, info);
+        symbols.put(key, info);
         arrayTable.put(name, new String[]{type, String.valueOf(size)});
-        lengthTable.put(name, size);
-        scopeTable.put(name, scope);
-        typeTable.put(name, type);
+        lengthTable.put(key, size);
+        scopeTable.put(key, scope);
+        typeTable.put(key, type);
     }
 
     /**
@@ -285,6 +293,7 @@ public class SymbolTable {
         // 先输出全局符号
         if (scopeGroups.containsKey("global")) {
             sb.append("全局符号:\n");
+
             for (SymbolInfo info : scopeGroups.get("global")) {
                 sb.append(info).append("\n");
             }
@@ -293,7 +302,7 @@ public class SymbolTable {
 
         // 然后输出各个函数作用域的符号
         for (String scope : scopeGroups.keySet()) {
-            if (!"global".equals(scope)) {
+            if (!"global".equals(scope) && !"unknown".equals(scope)) {
                 sb.append("函数 '").append(scope).append("' 的符号:\n");
                 for (SymbolInfo info : scopeGroups.get(scope)) {
                     sb.append(info).append("\n");

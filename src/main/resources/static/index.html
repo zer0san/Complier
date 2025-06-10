@@ -21,17 +21,52 @@
                     <input type="file" id="read_file" accept=".c,.txt" style="display: none;">
                     <button id="upload">编译运行</button>
                 </div>
-                <textarea id="ipt_area" placeholder="请输入C语言代码...">int f()
-{
-    return 1;
+                <textarea id="ipt_area" placeholder="请输入C语言代码...">
+int globalVar;
+char globalChar;
+string greeting;
+int numbers[10];
+
+int add(int x, int y) {
+    int result;
+    result = x + y;
+    return result;
 }
 
-int main(){
-    int a;
-    a = 1;
-    a = f();
+char isUpper(char c) {
+    if (c >= 'A') {
+        return '1';
+    } else {
+        return '0';
+    }
+}
+
+int main() {
+    int i;
+    int sum;
+    char flag;
+
+    globalVar = 100;
+    globalChar = 'Z';
+    greeting = "Hello, World!";
+
+    sum = 0;
+    i = 0;
+    while (i < 10) {
+        sum = sum + numbers[i];
+        i = i + 1;
+    }
+    sum = add(sum, globalVar);
+    flag = isUpper(globalChar);
+    if (flag == '1') {
+        greeting = "GlobalChar is uppercase.";
+    } else {
+        greeting = "GlobalChar is not uppercase.";
+    }
+
     return 0;
-}</textarea>
+}
+</textarea>
             </div>
         </div>
 
@@ -73,6 +108,47 @@ int main(){
                         <button class="toggle-btn" title="点击展开/收起">▼</button>
                     </div>
                     <textarea id="symbol_table" class="output-textarea" placeholder="符号表将在这里显示..." readonly></textarea>
+                </div>
+                <div class="output-section">
+                    <div class="output-header" data-target="keyword_table">
+                        <span class="output-label">关键字表 (k)</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+
+                    <textarea id="keyword_table" class="output-textarea"></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="identifier_table">
+                        <span class="output-label">标识符表 (i)</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <textarea id="identifier_table" class="output-textarea" placeholder="标识符表将在这里显示"></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="constant_table">
+                        <span class="output-label">常数表 (c)</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <textarea id="constant_table" class="output-textarea" placeholder="常数表将在这里显示"></textarea>
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="operator_table">
+                        <span class="output-label">运算符表 (op)</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <textarea id="operator_table" class="output-textarea" placeholder="运算符表将在这里显示"></textarea>
+
+                </div>
+
+                <div class="output-section">
+                    <div class="output-header" data-target="separator_table">
+                        <span class="output-label">分隔符表 (p)</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <textarea id="separator_table" class="output-textarea" placeholder="分隔符表将在这里显示"></textarea>
                 </div>
             </div>
         </div>
