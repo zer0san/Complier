@@ -18,7 +18,8 @@ public class SymbolTable {
 
     // 作用域表，存储符号的作用域信息：符号名 -> 作用域
     private final Map<String, String> scopeTable = new HashMap<>();
-
+    // 常量表，存储所有常量：常量值 -> [类型, 作用域]
+    private final Map<String, String[]> constantTable = new HashMap<>();
     // 当前处理的函数名（作用域）
     private String currentScope = "global";
 
@@ -142,7 +143,37 @@ public class SymbolTable {
                         addArray(q.arg1, arrayType, 0, currentScope);
                     }
                     break;
+
             }
+            // 识别数字常量
+            identifyConstant(q.arg1, currentScope);
+            identifyConstant(q.arg2, currentScope);
+
+            // 对于赋值操作，特别检查右侧是否为常量
+            if ("=".equals(q.op)) {
+                identifyConstant(q.arg1, currentScope);
+            }
+        }
+    }
+
+    /**
+     * 识别并添加常量到常量表
+     */
+    private void identifyConstant(String value, String scope) {
+        if (value == null || value.isEmpty() || value.equals("_"))
+            return;
+
+        // 识别整数常量
+        if (value.matches("-?\\d+")) {
+            constantTable.put(value, new String[]{"int", scope});
+        }
+        // 识别字符常量
+        else if (value.matches("'.'")) {
+            constantTable.put(value, new String[]{"char", scope});
+        }
+        // 识别字符串常量
+        else if (value.startsWith("\"") && value.endsWith("\"")) {
+            constantTable.put(value, new String[]{"string", scope});
         }
     }
 
@@ -321,7 +352,16 @@ public class SymbolTable {
                         entry.getKey(), entry.getValue()[0], entry.getValue()[1]));
             }
         }
-
+        // 输出常量表
+        if (!constantTable.isEmpty()) {
+            sb.append("常量表:\n");
+            sb.append(String.format("%-20s | %-10s | %-10s\n", "常量值", "类型", "作用域"));
+            sb.append("-------------------------------------------------\n");
+            for (Map.Entry<String, String[]> entry : constantTable.entrySet()) {
+                sb.append(String.format("%-20s | %-10s | %-10s\n",
+                        entry.getKey(), entry.getValue()[0], entry.getValue()[1]));
+            }
+        }
         return sb.toString();
     }
 }

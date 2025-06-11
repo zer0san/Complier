@@ -50,7 +50,7 @@ public class Main {
                 System.out.println(errorMessage);
                 return Result.fail("syntax error" + e.getMessage() + "\n" + errorMessage);
             }
-            List<Quadruple> qds = parser.show();// 获取四元式列表
+            List<Quadruple> qds = parser.show();
 
             // Generate symbol table
             com.Parser.Quadruple.SymbolTable symbolTable = new com.Parser.Quadruple.SymbolTable();
@@ -71,8 +71,7 @@ public class Main {
             successResult.setRes(StrUtil.join("\n", qdsList));
             successResult.setTokens(standardTokens);
             successResult.setSymbolTable(symbolTableString);
-            successResult.setMap(lexer);// 设置词法分析结果
-
+            successResult.setMap(lexer);
             successResult.setMsg("Analysis successful");
             return successResult;
 

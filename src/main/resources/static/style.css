@@ -59,10 +59,11 @@ textarea::placeholder {
 }
 
 #ipt_area {
-    min-height: 400px;
+
+    min-height: 800px;
     resize: vertical;
     flex: none;
-    height: 400px;
+    height: 1900px;
 }
 
 .actions {

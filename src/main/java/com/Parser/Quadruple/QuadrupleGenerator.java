@@ -281,7 +281,7 @@ public class QuadrupleGenerator {
     public String arrayAccess(String arrayName, Expr indexExpr) {
         String indexValue = generateExpr(indexExpr);
         String temp = newTemp();
-        quds.add(new Quadruple("=", arrayName + indexValue, "_", temp));
+        quds.add(new Quadruple("=", arrayName + "[" + indexValue + "]", "_", temp));
         return temp;
     }
 

@@ -184,7 +184,7 @@ public class Lexer {
         // 构建符号表和token序列
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);// 获取当前Token
-            String typeCode = getTypeCode(token.type);  // 获取Token类型的编码
+            String typeCode = getTypeCode(token.type);  // 获取Token类型的编码，如 "K"、"I"、"C"、"P"
 
             // 初始化该类型的计数器和映射.仅用于初始化
             typeCounter.putIfAbsent(typeCode, 0);// 如果不存在则初始化为0.
@@ -196,7 +196,7 @@ public class Lexer {
             // 将token添加到对应的符号表
             switch (token.type) {
                 case KEYWORD:
-                    keywordTable.putIfAbsent(token.value, keywordTable.size() + 1);
+                    keywordTable.putIfAbsent(token.value, keywordTable.size() + 1);// 不存在则添加，避免重复
                     break;
                 case IDENTIFIER:
                     identifierTable.putIfAbsent(token.value, identifierTable.size() + 1);
@@ -259,7 +259,7 @@ public class Lexer {
      * 打印符号表内容
      * @param table 要打印的符号表
      */
-    private void printTable(Map<String, Integer> table) {
+    private void printTable(Map<String, Integer> table) {// 这个代码的功能是:
         table.entrySet().stream()
                 .sorted(Map.Entry.comparingByValue())  // 按值排序
                 .forEach(entry -> System.out.println(entry.getValue() + ": " + entry.getKey()));
