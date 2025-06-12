@@ -20,7 +20,7 @@ public class QuadrupleGenerator {
     private final Set<String> declaredVariables = new HashSet<>();
     // 存储函数是否有返回值的映射，键为函数名，值为是否有返回值
     private final Map<String, Boolean> functionHasReturn = new HashMap<>();
-    // 新增：按作用域（函数名或 "global"）区分的声明变量集合
+    // 按作用域（函数名或 "global"）区分的声明变量集合
     private final Map<String, Set<String>> scopedDeclaredVariables = new HashMap<>();
 
 
@@ -103,7 +103,7 @@ public class QuadrupleGenerator {
         } else if (expr instanceof StringExpr) {
             // 字符串字面量的类型是string
             return "string";
-        } else if (expr instanceof VarExpr) {
+        } else if (expr instanceof VarExpr) {// 变量表达式
             VarExpr varExpr = (VarExpr) expr;
             // 使用getVarType获取变量类型，它能正确识别数组类型
             return getVarType(varExpr.name);
@@ -147,7 +147,7 @@ public class QuadrupleGenerator {
      * @return 如果类型兼容则返回true，否则返回false
      */
     private boolean isTypeCompatible(String expectedType, String actualType) {
-        // 完全相同的类型总是兼容的
+        // 完全相同的类型是兼容的
         if (expectedType.equals(actualType)) {
             return true;
         }
@@ -171,7 +171,7 @@ public class QuadrupleGenerator {
             return true;
         }
 
-        // 允许的基本类型转换规则
+        // 允许的基本类型转换规则 char and int
         if (expectedType.equals("int") && actualType.equals("char")) {
             return true; // char可以转换为int
         }

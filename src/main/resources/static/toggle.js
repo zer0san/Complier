@@ -9,9 +9,9 @@ class OutputToggleManager {
             'symbol_table',
             'keyword_table',
             'identifier_table',
-            'constant_table',  // 添加常数表
-            'operator_table',  // 添加运算符表
-            'separator_table'  // 添加分隔符表
+            'constant_table',
+            'operator_table',
+            'separator_table'
         ];
         this.collapsedSections = new Set();
         this.expandedSections = new Set();

@@ -307,7 +307,7 @@ public class Lexer {
 
         String value = input.substring(start, pos);
         tokens.add(new Token(Token.Type.STRING_LITERAL, value));
-        System.out.println("添加字符串字面量: " + value);
+        //System.out.println("添加字符串字面量: " + value);
         pos++; // 跳过结束的双引号
     }
 

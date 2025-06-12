@@ -126,7 +126,7 @@ public class SymbolTable {
 
                 case "var_decl":
                     // 变量声明：var_decl, type, _, varName
-                    String varType = !q.arg1.equals("_") ? q.arg1 : inferType(q.result, quadruples);
+                    String varType = !q.arg1.equals("_") ? q.arg1 : inferType(q.result, quadruples);// 该情况不产生
                     addSymbol(q.result, varType, "variable", currentScope);
                     break;
 
@@ -138,14 +138,14 @@ public class SymbolTable {
                         String arrayType = inferType(q.arg1, quadruples);
                         addArray(q.arg1, arrayType, size, currentScope);
                     } catch (NumberFormatException e) {
-                        // 处理大小不是整数的情况
+                        // 处理大小不是整数的情况，直接用0
                         String arrayType = inferType(q.arg1, quadruples);
                         addArray(q.arg1, arrayType, 0, currentScope);
                     }
                     break;
 
             }
-            // 识别数字常量
+            // 识别常量
             identifyConstant(q.arg1, currentScope);
             identifyConstant(q.arg2, currentScope);
 
@@ -180,6 +180,7 @@ public class SymbolTable {
     /**
      * 专门用于推断函数参数类型的方法
      */
+    // 没有使用他
     private String inferParameterType(String paramName, List<Quadruple> quadruples, String funcName) {
         // 首先检查是否在类型表中有记录
         if (typeTable.containsKey(paramName)) {
